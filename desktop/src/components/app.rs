@@ -877,6 +877,12 @@ struct PreviewWindowParams {
 }
 
 /// Spawn async task to create preview window
+///
+/// Note: This task is not tracked/cancellable. If drag is cancelled (e.g., via Escape)
+/// before completion, the window may still be created. This is safe because:
+/// - `cancel_active_drag_on_escape` calls `window::close_preview_window()` which closes
+///   any existing preview window regardless of when it was created
+/// - The preview window checks drag state on focus events
 fn spawn_preview_window_creation(params: PreviewWindowParams) {
     use crate::window::{create_preview_window, CreateMainWindowConfigParams};
 
