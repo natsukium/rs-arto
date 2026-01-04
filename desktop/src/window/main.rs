@@ -48,6 +48,9 @@ pub struct CreateMainWindowConfigParams {
     pub sidebar_show_all_files: bool,
     pub size: LogicalSize<u32>,
     pub position: LogicalPosition<i32>,
+    /// Skip position shifting for overlap avoidance.
+    /// Used for preview windows during drag where exact cursor-relative position is required.
+    pub skip_position_shift: bool,
 }
 
 impl CreateMainWindowConfigParams {
@@ -68,6 +71,7 @@ impl CreateMainWindowConfigParams {
             sidebar_show_all_files: sidebar_pref.show_all_files,
             size: size_pref.size,
             position: position_pref.position,
+            skip_position_shift: false,
         }
     }
 }
@@ -145,6 +149,23 @@ pub fn focus_last_focused_main_window() -> bool {
     }
 }
 
+/// Focus a specific window by its ID
+/// Returns true if the window was found and focused
+///
+/// Also updates `LAST_FOCUSED_WINDOW` so that `get_last_focused_window()`
+/// returns the correct value for intersection priority.
+pub fn focus_window(window_id: WindowId) -> bool {
+    list_main_windows()
+        .into_iter()
+        .find(|ctx| ctx.window.id() == window_id)
+        .map(|ctx| {
+            ctx.window.set_focus();
+            update_last_focused_window(window_id);
+            true
+        })
+        .unwrap_or(false)
+}
+
 pub fn close_all_main_windows() {
     let windows = list_main_windows();
     windows.iter().for_each(|w| w.close());
@@ -152,7 +173,7 @@ pub fn close_all_main_windows() {
 }
 
 /// Core function: Create new main window with a tab
-/// Returns the WindowId of the created window (async)
+/// Returns the window handle (Rc<DesktopService>) for further operations
 ///
 /// Directory resolution priority:
 /// 1. params.directory (from config or user)
@@ -162,7 +183,7 @@ pub fn close_all_main_windows() {
 pub(crate) async fn create_new_main_window(
     tab: Tab,
     mut params: CreateMainWindowConfigParams,
-) -> WindowId {
+) -> Rc<DesktopService> {
     // Resolve directory: params → tab parent → home dir → root (guaranteed to succeed)
     let directory = params
         .directory
@@ -171,26 +192,35 @@ pub(crate) async fn create_new_main_window(
         .or_else(dirs::home_dir)
         .unwrap_or_else(|| PathBuf::from("/"));
 
-    // Apply position shift based on existing windows
-    let position_offset = CONFIG.read().window_position.position_offset;
-    let (screen_origin, screen_size) = get_current_display_bounds()
-        .unwrap_or_else(|| (LogicalPosition::new(0, 0), LogicalSize::new(1000, 800)));
-    let occupied = list_main_window_positions();
-    let shifted_position = shift_position_if_needed(
-        params.position,
-        params.size,
-        position_offset,
-        screen_origin,
-        screen_size,
-        &occupied,
-    );
-    tracing::debug!(
-        screen_size=?screen_size,
-        position_offset=?position_offset,
-        resolved_position=?params.position,
-        shifted_position=?shifted_position,
-        "Shifted position is calculated"
-    );
+    // Apply position shift based on existing windows (unless skip_position_shift is set)
+    let shifted_position = if params.skip_position_shift {
+        tracing::debug!(
+            resolved_position=?params.position,
+            "Position shift skipped (skip_position_shift=true)"
+        );
+        params.position
+    } else {
+        let position_offset = CONFIG.read().window_position.position_offset;
+        let (screen_origin, screen_size) = get_current_display_bounds()
+            .unwrap_or_else(|| (LogicalPosition::new(0, 0), LogicalSize::new(1000, 800)));
+        let occupied = list_main_window_positions();
+        let result = shift_position_if_needed(
+            params.position,
+            params.size,
+            position_offset,
+            screen_origin,
+            screen_size,
+            &occupied,
+        );
+        tracing::debug!(
+            screen_size=?screen_size,
+            position_offset=?position_offset,
+            resolved_position=?params.position,
+            shifted_position=?result,
+            "Shifted position is calculated"
+        );
+        result
+    };
 
     // Create VirtualDom with the provided tab and params
     let dom = VirtualDom::new_with_props(
@@ -215,23 +245,24 @@ pub(crate) async fn create_new_main_window(
 
     let pending = window().new_window(dom, config);
     let handle = pending.await;
-    let window_id = handle.window.id();
-    register_main_window(std::rc::Rc::downgrade(&handle));
+    register_main_window(Rc::downgrade(&handle));
 
-    window_id
+    handle
 }
 
 /// Convenience: Create window with file
 pub async fn create_new_main_window_with_file(
     file: impl Into<PathBuf>,
     params: CreateMainWindowConfigParams,
-) -> WindowId {
+) -> Rc<DesktopService> {
     let file = file.into();
     create_new_main_window(Tab::new(file), params).await
 }
 
 /// Convenience: Create window with empty tab
-pub async fn create_new_main_window_with_empty(params: CreateMainWindowConfigParams) -> WindowId {
+pub async fn create_new_main_window_with_empty(
+    params: CreateMainWindowConfigParams,
+) -> Rc<DesktopService> {
     create_new_main_window(Tab::default(), params).await
 }
 
@@ -246,6 +277,17 @@ pub fn update_last_focused_window(window_id: WindowId) {
 
 pub(crate) fn get_last_focused_window() -> Option<WindowId> {
     LAST_FOCUSED_WINDOW.with(|last| *last.borrow())
+}
+
+/// Clear the last focused window if it matches the given window ID.
+/// Called when a window is closed to prevent stale references.
+pub fn clear_last_focused_if_matches(window_id: WindowId) {
+    LAST_FOCUSED_WINDOW.with(|last| {
+        let mut last = last.borrow_mut();
+        if *last == Some(window_id) {
+            *last = None;
+        }
+    });
 }
 
 fn find_window_metrics(window_id: WindowId) -> Option<WindowMetrics> {
