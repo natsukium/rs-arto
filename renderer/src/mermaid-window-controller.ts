@@ -198,7 +198,11 @@ class MermaidWindowController {
 
     // Exponential zoom: scale relative to current zoom level
     // This provides natural feel - same perceived change at any zoom level
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1; // 10% change per tick
+    const deltaScale = this.#getDeltaModeScale(event.deltaMode);
+    const deltaY = event.deltaY * deltaScale;
+    const ZOOM_SCALE = 0.01;
+    const zoomFactor = Math.exp(-deltaY * ZOOM_SCALE);
+
     const oldScale = this.#state.scale;
     const newScale = Math.max(0.1, Math.min(this.#maxZoom, oldScale * zoomFactor));
 
@@ -224,6 +228,19 @@ class MermaidWindowController {
 
   #handleDoubleClick(): void {
     this.#fitToWindow();
+  }
+
+  #getDeltaModeScale(deltaMode: number): number {
+    switch (deltaMode) {
+      case WheelEvent.DOM_DELTA_PIXEL:
+        return 1;
+      case WheelEvent.DOM_DELTA_LINE:
+        return 10;
+      case WheelEvent.DOM_DELTA_PAGE:
+        return 20;
+      default:
+        return 1;
+    }
   }
 
   #zoom(delta: number): void {
