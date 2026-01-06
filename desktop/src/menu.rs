@@ -16,6 +16,9 @@ enum MenuId {
     NewTab,
     Open,
     OpenDirectory,
+    OpenInExternalEditor,
+    RevealInFinder,
+    CopyFilePath,
     CloseTab,
     CloseAllTabs,
     CloseWindow,
@@ -40,6 +43,9 @@ impl MenuId {
             "file.new_tab" => Some(Self::NewTab),
             "file.open" => Some(Self::Open),
             "file.open_directory" => Some(Self::OpenDirectory),
+            "file.open_in_external_editor" => Some(Self::OpenInExternalEditor),
+            "file.reveal_in_finder" => Some(Self::RevealInFinder),
+            "file.copy_file_path" => Some(Self::CopyFilePath),
             "file.close_tab" => Some(Self::CloseTab),
             "file.close_all_tabs" => Some(Self::CloseAllTabs),
             "file.close_window" => Some(Self::CloseWindow),
@@ -65,6 +71,9 @@ impl MenuId {
             Self::NewTab => "file.new_tab",
             Self::Open => "file.open",
             Self::OpenDirectory => "file.open_directory",
+            Self::OpenInExternalEditor => "file.open_in_external_editor",
+            Self::RevealInFinder => "file.reveal_in_finder",
+            Self::CopyFilePath => "file.copy_file_path",
             Self::CloseTab => "file.close_tab",
             Self::CloseAllTabs => "file.close_all_tabs",
             Self::CloseWindow => "file.close_window",
@@ -146,6 +155,20 @@ fn add_file_menu(menu: &Menu) {
                 Some(Code::KeyO),
                 Some(Modifiers::SHIFT),
             ),
+            &PredefinedMenuItem::separator(),
+            &create_menu_item(
+                MenuId::OpenInExternalEditor,
+                "Open in External Editor",
+                Some(Code::KeyE),
+                Some(Modifiers::SHIFT),
+            ),
+            &create_menu_item(
+                MenuId::RevealInFinder,
+                "Reveal in Finder",
+                Some(Code::KeyR),
+                Some(Modifiers::SHIFT),
+            ),
+            &create_menu_item(MenuId::CopyFilePath, "Copy File Path", None, None),
             &PredefinedMenuItem::separator(),
             &create_menu_item(MenuId::CloseTab, "Close Tab", Some(Code::KeyW), None),
             &create_menu_item(MenuId::CloseAllTabs, "Close All Tabs", None, None),
@@ -392,10 +415,38 @@ pub fn handle_menu_event_with_state(event: &MenuEvent, state: &mut AppState) -> 
                 }
             });
         }
+        MenuId::OpenInExternalEditor => {
+            if let Some(file) = get_current_file(state) {
+                crate::utils::file_operations::open_in_external_editor(&file);
+            }
+        }
+        MenuId::RevealInFinder => {
+            if let Some(file) = get_current_file(state) {
+                crate::utils::file_operations::reveal_in_finder(&file);
+            }
+        }
+        MenuId::CopyFilePath => {
+            if let Some(file) = get_current_file(state) {
+                crate::utils::file_operations::copy_to_clipboard(&file.to_string_lossy());
+            }
+        }
         _ => return false,
     }
 
     true
+}
+
+/// Get the current file path from state if viewing a file
+fn get_current_file(state: &AppState) -> Option<PathBuf> {
+    let tabs = state.tabs.read();
+    let active_tab = *state.active_tab.read();
+    tabs.get(active_tab).and_then(|tab| {
+        if let crate::state::TabContent::File(path) = &tab.content {
+            Some(path.clone())
+        } else {
+            None
+        }
+    })
 }
 
 /// Show file picker dialog and return selected file

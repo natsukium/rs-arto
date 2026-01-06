@@ -1,3 +1,4 @@
+mod context_menu;
 mod file_error_view;
 mod file_viewer;
 mod inline_viewer;

@@ -5,6 +5,17 @@ import * as markdownViewer from "./markdown-viewer";
 import * as syntaxHighlighter from "./syntax-highlighter";
 import * as mermaidRenderer from "./mermaid-renderer";
 import { renderCoordinator } from "./render-coordinator";
+import { setup as setupContextMenu, restoreSelection } from "./context-menu-handler";
+
+// Declare global Arto namespace
+declare global {
+  interface Window {
+    Arto: {
+      setupContextMenu: typeof setupContextMenu;
+      restoreSelection: typeof restoreSelection;
+    };
+  }
+}
 
 function getCurrentTheme(): Theme {
   const theme = document.body.getAttribute("data-theme");
@@ -30,6 +41,12 @@ export function init(): void {
   syntaxHighlighter.mount();
   mermaidRenderer.init();
   renderCoordinator.init();
+
+  // Expose Arto API on window for Rust interop
+  window.Arto = {
+    setupContextMenu,
+    restoreSelection,
+  };
 
   // Listen for theme changes from Rust
   document.addEventListener("arto:theme-changed", ((event: CustomEvent) => {
