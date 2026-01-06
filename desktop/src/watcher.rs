@@ -78,10 +78,7 @@ impl FileWatcher {
                         let mut notified_dirs = std::collections::HashSet::new();
                         for changed_path in &changed_paths {
                             // Skip .git directory changes (too noisy)
-                            if changed_path
-                                .components()
-                                .any(|c| c.as_os_str() == ".git")
-                            {
+                            if changed_path.components().any(|c| c.as_os_str() == ".git") {
                                 continue;
                             }
 

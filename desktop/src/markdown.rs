@@ -1,9 +1,116 @@
 use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
 use lol_html::{element, HtmlRewriter, Settings};
-use pulldown_cmark::{html, CodeBlockKind, Event, Options, Parser, Tag, TagEnd};
+use pulldown_cmark::{html, CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use serde_yaml::Value as YamlValue;
 use std::path::{Path, PathBuf};
+
+/// Information about a heading extracted from markdown
+#[derive(Debug, Clone, PartialEq)]
+pub struct HeadingInfo {
+    /// Heading level (1-6)
+    pub level: u8,
+    /// Heading text content
+    pub text: String,
+    /// Generated anchor ID for linking
+    pub id: String,
+}
+
+/// Generate a URL-safe slug from heading text
+fn generate_slug(text: &str) -> String {
+    text.to_lowercase()
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() {
+                c
+            } else if c.is_whitespace() || c == '-' || c == '_' || c == '.' {
+                '-'
+            } else {
+                // Skip other characters (including non-ASCII)
+                '\0'
+            }
+        })
+        .filter(|&c| c != '\0')
+        .collect::<String>()
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("-")
+}
+
+/// Extract headings from markdown content
+pub fn extract_headings(markdown: &str) -> Vec<HeadingInfo> {
+    let options = Options::all();
+
+    // Skip frontmatter if present
+    let content = if let Some(after_start) = markdown.strip_prefix("---") {
+        if let Some(end_pos) = after_start.find("\n---") {
+            after_start[end_pos + 4..].trim_start()
+        } else {
+            markdown
+        }
+    } else {
+        markdown
+    };
+
+    // Process GitHub alerts (they contain their own parsing)
+    let processed = process_github_alerts(content);
+    let parser = Parser::new_ext(&processed, options);
+
+    let mut headings = Vec::new();
+    let mut current_level: Option<u8> = None;
+    let mut current_text = String::new();
+    let mut slug_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+
+    for event in parser {
+        match event {
+            Event::Start(Tag::Heading { level, .. }) => {
+                current_level = Some(match level {
+                    HeadingLevel::H1 => 1,
+                    HeadingLevel::H2 => 2,
+                    HeadingLevel::H3 => 3,
+                    HeadingLevel::H4 => 4,
+                    HeadingLevel::H5 => 5,
+                    HeadingLevel::H6 => 6,
+                });
+                current_text.clear();
+            }
+            Event::Text(text) if current_level.is_some() => {
+                current_text.push_str(&text);
+            }
+            Event::Code(code) if current_level.is_some() => {
+                current_text.push_str(&code);
+            }
+            Event::SoftBreak | Event::HardBreak if current_level.is_some() => {
+                current_text.push(' ');
+            }
+            Event::End(TagEnd::Heading(_)) if current_level.is_some() => {
+                let level = current_level.take().unwrap();
+                let base_slug = generate_slug(&current_text);
+
+                // Handle duplicate slugs by appending a number
+                let id = if let Some(count) = slug_counts.get(&base_slug) {
+                    let new_count = count + 1;
+                    slug_counts.insert(base_slug.clone(), new_count);
+                    format!("{}-{}", base_slug, new_count)
+                } else {
+                    slug_counts.insert(base_slug.clone(), 0);
+                    base_slug
+                };
+
+                headings.push(HeadingInfo {
+                    level,
+                    text: current_text.trim().to_string(),
+                    id,
+                });
+            }
+            _ => {}
+        }
+    }
+
+    headings
+}
 
 /// Render Markdown to HTML
 pub fn render_to_html(markdown: impl AsRef<str>, base_path: impl AsRef<Path>) -> Result<String> {
@@ -343,6 +450,143 @@ fn get_mime_type(path: &Path) -> &'static str {
         Some("ico") => "image/x-icon",
         _ => "image/png", // Default
     }
+}
+
+/// Render Markdown to HTML with TOC information
+///
+/// Returns a tuple of (rendered HTML with heading IDs, extracted headings)
+pub fn render_to_html_with_toc(
+    markdown: impl AsRef<str>,
+    base_path: impl AsRef<Path>,
+) -> Result<(String, Vec<HeadingInfo>)> {
+    let markdown = markdown.as_ref();
+    let base_path = base_path.as_ref();
+
+    // Extract headings first
+    let headings = extract_headings(markdown);
+
+    // Enable GitHub Flavored Markdown options
+    let options = Options::all();
+
+    // Get base directory for resolving relative paths
+    let base_dir = base_path
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| PathBuf::from("."));
+
+    // Extract frontmatter if present
+    let (frontmatter_html, content) = extract_and_render_frontmatter(markdown);
+
+    // Process GitHub alerts
+    let processed_markdown = process_github_alerts(&content);
+
+    // Parse Markdown and process blocks
+    let parser = Parser::new_ext(&processed_markdown, options);
+    let parser = process_code_blocks(parser, "mermaid");
+    let parser = process_code_blocks(parser, "math");
+    let parser = process_math_expressions(parser);
+
+    // Convert to HTML
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, parser);
+
+    // Post-process HTML with heading IDs
+    let html_output = post_process_html_with_headings(&html_output, base_dir.as_path(), &headings);
+
+    // Prepend frontmatter table if present
+    let final_output = if frontmatter_html.is_empty() {
+        html_output
+    } else {
+        format!("{}\n{}", frontmatter_html, html_output)
+    };
+
+    Ok((final_output, headings))
+}
+
+/// Post-process HTML to handle img, anchor tags, and add heading IDs using lol_html
+fn post_process_html_with_headings(
+    html_str: &str,
+    base_dir: &Path,
+    headings: &[HeadingInfo],
+) -> String {
+    let base_dir = base_dir.to_path_buf();
+    let mut output = Vec::new();
+    let heading_index = std::cell::RefCell::new(0usize);
+    let headings = headings.to_vec();
+
+    let mut rewriter = HtmlRewriter::new(
+        Settings {
+            element_content_handlers: vec![
+                // Process heading tags: add IDs for TOC navigation
+                element!("h1, h2, h3, h4, h5, h6", |el| {
+                    let mut idx = heading_index.borrow_mut();
+                    if let Some(heading) = headings.get(*idx) {
+                        el.set_attribute("id", &heading.id)?;
+                    }
+                    *idx += 1;
+                    Ok(())
+                }),
+                // Process img tags: convert relative paths to data URLs
+                element!("img[src]", move |el| {
+                    if let Some(src) = el.get_attribute("src") {
+                        if !src.starts_with("http://")
+                            && !src.starts_with("https://")
+                            && !src.starts_with("data:")
+                        {
+                            let absolute_path = base_dir.join(&src);
+                            if let Ok(canonical_path) = absolute_path.canonicalize() {
+                                if let Ok(image_data) = std::fs::read(&canonical_path) {
+                                    let mime_type = get_mime_type(&canonical_path);
+                                    let base64_data = general_purpose::STANDARD.encode(&image_data);
+                                    let data_url =
+                                        format!("data:{};base64,{}", mime_type, base64_data);
+                                    el.set_attribute("src", &data_url)?;
+                                }
+                            }
+                        }
+                    }
+                    Ok(())
+                }),
+                // Process anchor tags: convert markdown links to spans
+                element!("a[href]", |el| {
+                    if let Some(href) = el.get_attribute("href") {
+                        if !href.starts_with("http://") && !href.starts_with("https://") {
+                            if let Some(ext) = std::path::Path::new(&href)
+                                .extension()
+                                .and_then(|e| e.to_str())
+                            {
+                                // Replace with span element
+                                let escaped_href = href.replace('\'', "\\'");
+                                let onclick = indoc::formatdoc! {r#"
+                                        if (event.button === 0 || event.button === 1) {{
+                                            event.preventDefault();
+                                            window.handleMarkdownLinkClick('{escaped_href}', event.button);
+                                        }}"#
+                                };
+                                el.set_tag_name("span")?;
+                                el.remove_attribute("href");
+                                if ext != "md" && ext != "markdown" {
+                                    el.set_attribute("class", "md-link md-link-invalid")?;
+                                } else {
+                                    el.set_attribute("class", "md-link")?;
+                                }
+                                el.set_attribute("onmousedown", &onclick)?;
+                            }
+                        }
+                    }
+                    Ok(())
+                }),
+            ],
+            ..Settings::default()
+        },
+        |chunk: &[u8]| {
+            output.extend_from_slice(chunk);
+        },
+    );
+
+    let _ = rewriter.write(html_str.as_bytes());
+    let _ = rewriter.end();
+    String::from_utf8(output).unwrap_or_else(|_| html_str.to_string())
 }
 
 /// Post-process HTML to handle img and anchor tags using lol_html
@@ -1041,6 +1285,154 @@ mod tests {
         assert!(
             frontmatter_pos < heading_pos,
             "Frontmatter should appear before content"
+        );
+    }
+
+    #[test]
+    fn test_generate_slug() {
+        assert_eq!(generate_slug("Hello World"), "hello-world");
+        assert_eq!(generate_slug("My Heading"), "my-heading");
+        assert_eq!(
+            generate_slug("Heading with  Multiple   Spaces"),
+            "heading-with-multiple-spaces"
+        );
+        assert_eq!(
+            generate_slug("Special: Characters! Here?"),
+            "special-characters-here"
+        );
+        assert_eq!(generate_slug("日本語"), ""); // Non-ASCII characters are stripped
+        assert_eq!(generate_slug("Code `example`"), "code-example");
+        assert_eq!(generate_slug("under_score"), "under-score");
+    }
+
+    #[test]
+    fn test_extract_headings_basic() {
+        let markdown = indoc! {"
+            # Title
+
+            Some content
+
+            ## Section 1
+
+            More content
+
+            ### Subsection 1.1
+
+            Even more content
+
+            ## Section 2
+        "};
+
+        let headings = extract_headings(markdown);
+
+        assert_eq!(headings.len(), 4);
+        assert_eq!(
+            headings[0],
+            HeadingInfo {
+                level: 1,
+                text: "Title".to_string(),
+                id: "title".to_string()
+            }
+        );
+        assert_eq!(
+            headings[1],
+            HeadingInfo {
+                level: 2,
+                text: "Section 1".to_string(),
+                id: "section-1".to_string()
+            }
+        );
+        assert_eq!(
+            headings[2],
+            HeadingInfo {
+                level: 3,
+                text: "Subsection 1.1".to_string(),
+                id: "subsection-1-1".to_string()
+            }
+        );
+        assert_eq!(
+            headings[3],
+            HeadingInfo {
+                level: 2,
+                text: "Section 2".to_string(),
+                id: "section-2".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn test_extract_headings_with_duplicate_slugs() {
+        let markdown = indoc! {"
+            # Introduction
+
+            ## Overview
+
+            Content
+
+            ## Overview
+
+            More content
+
+            ## Overview
+        "};
+
+        let headings = extract_headings(markdown);
+
+        assert_eq!(headings.len(), 4);
+        assert_eq!(headings[0].id, "introduction");
+        assert_eq!(headings[1].id, "overview");
+        assert_eq!(headings[2].id, "overview-1");
+        assert_eq!(headings[3].id, "overview-2");
+    }
+
+    #[test]
+    fn test_extract_headings_with_frontmatter() {
+        let markdown = indoc! {"
+            ---
+            title: Test
+            ---
+
+            # Heading After Frontmatter
+
+            Content
+        "};
+
+        let headings = extract_headings(markdown);
+
+        assert_eq!(headings.len(), 1);
+        assert_eq!(headings[0].text, "Heading After Frontmatter");
+    }
+
+    #[test]
+    fn test_render_to_html_with_toc() {
+        let markdown = indoc! {"
+            # Title
+
+            Some content
+
+            ## Section 1
+
+            More content
+        "};
+
+        let temp_dir = TempDir::new().unwrap();
+        let md_path = temp_dir.path().join("test.md");
+
+        let (html, headings) = render_to_html_with_toc(markdown, &md_path).unwrap();
+
+        // Check headings were extracted
+        assert_eq!(headings.len(), 2);
+        assert_eq!(headings[0].text, "Title");
+        assert_eq!(headings[1].text, "Section 1");
+
+        // Check IDs were added to HTML
+        assert!(
+            html.contains(r#"<h1 id="title">"#),
+            "H1 should have id attribute"
+        );
+        assert!(
+            html.contains(r#"<h2 id="section-1">"#),
+            "H2 should have id attribute"
         );
     }
 }

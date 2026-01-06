@@ -14,6 +14,7 @@ use super::header::Header;
 use super::icon::{Icon, IconName};
 use super::sidebar::Sidebar;
 use super::tab::TabBar;
+use super::toc_panel::TocPanel;
 use crate::assets::MAIN_SCRIPT;
 use crate::drag;
 use crate::events::{
@@ -360,6 +361,8 @@ pub fn App(
                 TabBar {},
                 Content {},
             }
+
+            TocPanel { headings: state.toc_headings.read().clone() }
 
             // Drag and drop overlay
             if is_dragging() {

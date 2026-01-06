@@ -123,3 +123,33 @@
 .header-right .reload-button.reloading .icon {
   animation: spin 0.6s ease-in-out;
 }
+
+/* TOC toggle button - matches sidebar toggle style */
+.header-right .toc-toggle-button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: all 0.2s;
+  width: 28px;
+  height: 28px;
+
+  &:hover {
+    border-color: var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-color);
+  }
+
+  .icon {
+    opacity: 0.5;
+  }
+
+  &.active .icon {
+    opacity: 1;
+  }
+}

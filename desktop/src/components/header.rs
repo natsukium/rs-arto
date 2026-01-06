@@ -160,6 +160,21 @@ pub fn Header() -> Element {
 
                 // Theme selector
                 ThemeSelector { current_theme: state.current_theme }
+
+                // TOC toggle button
+                button {
+                    class: "toc-toggle-button",
+                    class: if *state.toc_open.read() { "active" },
+                    title: "Toggle Table of Contents",
+                    onclick: move |_| {
+                        let current = *state.toc_open.read();
+                        state.toc_open.set(!current);
+                    },
+                    Icon {
+                        name: IconName::List,
+                        size: 18,
+                    }
+                }
             }
         }
     }

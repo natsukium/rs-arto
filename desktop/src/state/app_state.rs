@@ -3,6 +3,7 @@ use dioxus::prelude::*;
 use std::path::PathBuf;
 
 use super::persistence::LAST_FOCUSED_STATE;
+use crate::markdown::HeadingInfo;
 use crate::theme::Theme;
 
 mod sidebar;
@@ -40,19 +41,26 @@ pub struct AppState {
     pub zoom_level: Signal<f64>,
     pub directory: Signal<Option<PathBuf>>,
     pub sidebar: Signal<Sidebar>,
+    pub toc_open: Signal<bool>,
+    pub toc_width: Signal<f64>,
+    pub toc_headings: Signal<Vec<HeadingInfo>>,
     pub position: Signal<LogicalPosition<i32>>,
     pub size: Signal<LogicalSize<u32>>,
 }
 
 impl Default for AppState {
     fn default() -> Self {
+        let persisted = LAST_FOCUSED_STATE.read();
         Self {
             tabs: Signal::new(vec![Tab::default()]),
             active_tab: Signal::new(0),
-            current_theme: Signal::new(LAST_FOCUSED_STATE.read().theme),
+            current_theme: Signal::new(persisted.theme),
             zoom_level: Signal::new(1.0),
             directory: Signal::new(None),
             sidebar: Signal::new(Sidebar::default()),
+            toc_open: Signal::new(persisted.toc_open),
+            toc_width: Signal::new(persisted.toc_width),
+            toc_headings: Signal::new(Vec::new()),
             position: Signal::new(Default::default()),
             size: Signal::new(Default::default()),
         }

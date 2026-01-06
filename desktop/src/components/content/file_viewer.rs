@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use super::context_menu::ContextMenuData;
 use super::context_menu_state::{open_context_menu, ContentContextMenuState};
-use crate::markdown::render_to_html;
+use crate::markdown::render_to_html_with_toc;
 use crate::state::{AppState, TabContent};
 use crate::utils::file::is_markdown_file;
 use crate::watcher::FILE_WATCHER;
@@ -72,10 +72,11 @@ fn use_file_loader(
                 Ok(content) => {
                     // Check if file has markdown extension
                     if is_markdown_file(&file) {
-                        // Render as markdown
-                        match render_to_html(&content, &file) {
-                            Ok(rendered) => {
+                        // Render as markdown with TOC heading extraction
+                        match render_to_html_with_toc(&content, &file) {
+                            Ok((rendered, headings)) => {
                                 html.set(rendered);
+                                state.toc_headings.set(headings);
                                 tracing::trace!("Rendered as Markdown: {:?}", &file);
                             }
                             Err(e) => {
@@ -91,6 +92,7 @@ fn use_file_loader(
                                     escaped_content
                                 );
                                 html.set(plain_html);
+                                state.toc_headings.set(Vec::new());
                             }
                         }
                     } else {
@@ -102,6 +104,7 @@ fn use_file_loader(
                             escaped_content
                         );
                         html.set(plain_html);
+                        state.toc_headings.set(Vec::new());
                     }
                 }
                 Err(e) => {

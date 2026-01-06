@@ -7,3 +7,4 @@ pub mod mermaid_window;
 pub mod sidebar;
 pub mod tab;
 pub mod theme_selector;
+pub mod toc_panel;
