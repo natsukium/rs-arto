@@ -62,6 +62,8 @@ pub fn App(
     sidebar_open: bool,
     sidebar_width: f64,
     sidebar_show_all_files: bool,
+    toc_open: bool,
+    toc_width: f64,
 ) -> Element {
     // Initialize application state with the provided tab
     let mut state = use_context_provider(|| {
@@ -90,6 +92,17 @@ pub fn App(
             state.sidebar_width = sidebar_width;
             state.sidebar_show_all_files = sidebar_show_all_files;
         }
+
+        // Apply initial TOC settings from params
+        {
+            app_state.toc_open.set(toc_open);
+            app_state.toc_width.set(toc_width);
+            // Update last focused state for "Last Focused" behavior
+            let mut state = LAST_FOCUSED_STATE.write();
+            state.toc_open = toc_open;
+            state.toc_width = toc_width;
+        }
+
         let metrics = crate::window::metrics::capture_window_metrics(&window().window);
         *app_state.position.write() = LogicalPosition::new(metrics.position.x, metrics.position.y);
         *app_state.size.write() = LogicalSize::new(metrics.size.width, metrics.size.height);

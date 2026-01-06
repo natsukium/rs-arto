@@ -13,7 +13,7 @@ pub use behavior::{NewWindowBehavior, StartupBehavior};
 pub use directory_config::DirectoryConfig;
 pub use sidebar_config::SidebarConfig;
 pub use theme_config::ThemeConfig;
-pub use toc_config::TocConfig;
+pub use toc_config::{TocConfig, DEFAULT_TOC_WIDTH};
 pub use window_dimension::{WindowDimension, WindowDimensionUnit};
 pub use window_position_config::{
     WindowPosition, WindowPositionConfig, WindowPositionMode, WindowPositionOffset,

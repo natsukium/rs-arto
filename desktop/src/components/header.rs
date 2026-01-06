@@ -167,8 +167,7 @@ pub fn Header() -> Element {
                     class: if *state.toc_open.read() { "active" },
                     title: "Toggle Table of Contents",
                     onclick: move |_| {
-                        let current = *state.toc_open.read();
-                        state.toc_open.set(!current);
+                        state.toggle_toc();
                     },
                     Icon {
                         name: IconName::List,

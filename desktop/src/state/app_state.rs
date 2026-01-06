@@ -76,4 +76,11 @@ impl AppState {
         self.sidebar.write().expanded_dirs.clear();
         LAST_FOCUSED_STATE.write().directory = Some(path);
     }
+
+    /// Toggle TOC panel visibility
+    pub fn toggle_toc(&mut self) {
+        let new_state = !*self.toc_open.read();
+        self.toc_open.set(new_state);
+        LAST_FOCUSED_STATE.write().toc_open = new_state;
+    }
 }

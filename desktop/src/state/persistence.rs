@@ -6,6 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
+use crate::config::DEFAULT_TOC_WIDTH;
 use crate::state::AppState;
 use crate::theme::Theme;
 
@@ -68,7 +69,7 @@ impl Default for PersistedState {
             sidebar_width: 280.0,
             sidebar_show_all_files: false,
             toc_open: false,
-            toc_width: 220.0,
+            toc_width: DEFAULT_TOC_WIDTH,
             window_position: Position::default(),
             window_size: Size::default(),
         }
