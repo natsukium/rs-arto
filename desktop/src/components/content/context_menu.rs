@@ -336,12 +336,14 @@ fn ImageContextItems(src: String, on_close: EventHandler<()>) -> Element {
                 move |_| {
                     let src = src.clone();
                     spawn(async move {
+                        // Use JSON encoding to safely escape the string for JavaScript
+                        let json_src = serde_json::to_string(&src).unwrap_or_default();
                         let js = format!(
                             r#"
                             (async () => {{
                                 const img = new Image();
                                 img.crossOrigin = 'anonymous';
-                                img.src = `{}`;
+                                img.src = {};
                                 await new Promise(r => img.onload = r);
                                 const canvas = document.createElement('canvas');
                                 canvas.width = img.naturalWidth;
@@ -355,7 +357,7 @@ fn ImageContextItems(src: String, on_close: EventHandler<()>) -> Element {
                                 }}, 'image/png');
                             }})();
                             "#,
-                            src.replace('`', "\\`")
+                            json_src
                         );
                         let _ = document::eval(&js).await;
                     });
@@ -373,19 +375,20 @@ fn ImageContextItems(src: String, on_close: EventHandler<()>) -> Element {
                 move |_| {
                     let src = src.clone();
                     spawn(async move {
-                        // Create a download link and trigger it
+                        // Use JSON encoding to safely escape the string for JavaScript
+                        let json_src = serde_json::to_string(&src).unwrap_or_default();
                         let js = format!(
                             r#"
                             (() => {{
                                 const a = document.createElement('a');
-                                a.href = `{}`;
+                                a.href = {};
                                 a.download = 'image.png';
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
                             }})();
                             "#,
-                            src.replace('`', "\\`")
+                            json_src
                         );
                         let _ = document::eval(&js).await;
                     });
@@ -430,57 +433,15 @@ fn CodeBlockContextItems(content: String, on_close: EventHandler<()>) -> Element
 
 #[component]
 fn MermaidContextItems(source: String, on_close: EventHandler<()>) -> Element {
-    let state = use_context::<AppState>();
-
     rsx! {
         ContextMenuItem {
-            label: "Copy as Image",
-            icon: Some(IconName::Photo),
-            on_click: {
-                let on_close = on_close;
-                move |_| {
-                    // Trigger mermaid copy via JavaScript (reuse existing code-copy logic)
-                    spawn(async move {
-                        let js = r#"
-                            (async () => {
-                                const mermaidBlock = document.querySelector('.preprocessed-mermaid');
-                                if (mermaidBlock) {
-                                    const copyButton = mermaidBlock.querySelector('.copy-image-button');
-                                    if (copyButton) {
-                                        copyButton.click();
-                                    }
-                                }
-                            })();
-                        "#;
-                        let _ = document::eval(js).await;
-                    });
-                    on_close.call(());
-                }
-            },
-        }
-
-        ContextMenuItem {
-            label: "Copy Source",
-            icon: Some(IconName::Code),
+            label: "Copy Code",
+            icon: Some(IconName::Copy),
             on_click: {
                 let source = source.clone();
                 let on_close = on_close;
                 move |_| {
                     crate::utils::file_operations::copy_to_clipboard(&source);
-                    on_close.call(());
-                }
-            },
-        }
-
-        ContextMenuItem {
-            label: "Open in Viewer",
-            icon: Some(IconName::Maximize),
-            on_click: {
-                let source = source.clone();
-                let on_close = on_close;
-                move |_| {
-                    let theme = *state.current_theme.read();
-                    crate::window::open_or_focus_mermaid_window(source.clone(), theme);
                     on_close.call(());
                 }
             },

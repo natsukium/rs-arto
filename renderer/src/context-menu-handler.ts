@@ -27,8 +27,8 @@ function detectContext(target: HTMLElement): ContentContextType {
   while (current && !current.classList.contains("markdown-body")) {
     // Check for mermaid diagram
     if (current.classList.contains("preprocessed-mermaid")) {
-      const sourceEl = current.querySelector<HTMLPreElement>(".mermaid-source");
-      const source = sourceEl?.textContent || "";
+      // Source is stored in data-original-content attribute
+      const source = current.dataset.originalContent || "";
       return { type: "mermaid", source };
     }
 

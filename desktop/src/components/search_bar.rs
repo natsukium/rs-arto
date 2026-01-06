@@ -43,22 +43,19 @@ pub fn SearchBar() -> Element {
             if let Some(ref text) = initial_text {
                 if !text.is_empty() {
                     has_input.set(true);
-                    // Escape for JavaScript template literal
-                    let escaped = text
-                        .replace('\\', "\\\\")
-                        .replace('`', "\\`")
-                        .replace('$', "\\$");
+                    // Use JSON encoding to safely escape the string for JavaScript
+                    let json_encoded = serde_json::to_string(text).unwrap_or_default();
                     let js = format!(
                         r#"
                         const input = document.querySelector('.search-input');
                         if (input) {{
-                            input.value = `{}`;
+                            input.value = {};
                             input.focus();
                             input.select();
                             window.Arto.search.find(input.value);
                         }}
                         "#,
-                        escaped
+                        json_encoded
                     );
                     spawn(async move {
                         let _ = document::eval(&js).await;

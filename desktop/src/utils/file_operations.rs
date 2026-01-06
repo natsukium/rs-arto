@@ -59,8 +59,9 @@ pub fn copy_to_clipboard(text: &str) {
         use dioxus::prelude::*;
         let text = text.to_string();
         spawn(async move {
-            let escaped = text.replace('\\', "\\\\").replace('`', "\\`");
-            let js = format!(r#"navigator.clipboard.writeText(`{}`)"#, escaped);
+            // Use JSON encoding to safely escape the string for JavaScript
+            let json_encoded = serde_json::to_string(&text).unwrap_or_default();
+            let js = format!("navigator.clipboard.writeText({})", json_encoded);
             if let Err(e) = document::eval(&js).await {
                 tracing::error!(%e, "Failed to copy to clipboard");
             }
