@@ -1,5 +1,6 @@
 use super::super::persistence::LAST_FOCUSED_STATE;
 use super::AppState;
+use crate::history::HistoryManager;
 use dioxus::prelude::*;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -8,18 +9,23 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sidebar {
     pub open: bool,
+    pub root_directory: Option<PathBuf>,
     pub expanded_dirs: HashSet<PathBuf>,
     pub width: f64,
     pub show_all_files: bool,
+    /// History of root directory navigation (not persisted)
+    dir_history: HistoryManager,
 }
 
 impl Default for Sidebar {
     fn default() -> Self {
         Self {
             open: false,
+            root_directory: None,
             expanded_dirs: HashSet::new(),
             width: 280.0,
             show_all_files: false,
+            dir_history: HistoryManager::new(),
         }
     }
 }
@@ -33,6 +39,31 @@ impl Sidebar {
         } else {
             self.expanded_dirs.insert(path.to_owned());
         }
+    }
+
+    /// Check if we can go back in directory history
+    pub fn can_go_back(&self) -> bool {
+        self.dir_history.can_go_back()
+    }
+
+    /// Check if we can go forward in directory history
+    pub fn can_go_forward(&self) -> bool {
+        self.dir_history.can_go_forward()
+    }
+
+    /// Push a directory to history
+    pub fn push_to_history(&mut self, path: impl Into<PathBuf>) {
+        self.dir_history.push(path);
+    }
+
+    /// Go back in directory history
+    pub fn go_back(&mut self) -> Option<PathBuf> {
+        self.dir_history.go_back().map(|p| p.to_path_buf())
+    }
+
+    /// Go forward in directory history
+    pub fn go_forward(&mut self) -> Option<PathBuf> {
+        self.dir_history.go_forward().map(|p| p.to_path_buf())
     }
 }
 

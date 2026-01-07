@@ -102,7 +102,7 @@ pub fn TabItem(
     // Create new window first, then close tab (in case it's the last tab)
     let handle_open_in_new_window = move |_| {
         if let Some(tab) = state.get_tab(index) {
-            let directory = state.directory.read().clone();
+            let directory = state.sidebar.read().root_directory.clone();
 
             spawn(async move {
                 let params = crate::window::main::CreateMainWindowConfigParams {
@@ -124,7 +124,7 @@ pub fn TabItem(
 
         // Phase 1: Prepare - get tab copy (don't close yet)
         if let Some(tab) = state.get_tab(index) {
-            let current_directory = state.directory.read().clone();
+            let current_directory = state.sidebar.read().root_directory.clone();
 
             let request = TabTransferRequest {
                 source_window_id: window().id(),

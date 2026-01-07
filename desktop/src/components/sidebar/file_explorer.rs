@@ -41,7 +41,7 @@ fn read_sorted_entries(path: &PathBuf) -> Vec<PathBuf> {
 #[component]
 pub fn FileExplorer() -> Element {
     let state = use_context::<AppState>();
-    let root_directory = state.directory.read().clone();
+    let root_directory = state.sidebar.read().root_directory.clone();
 
     // Refresh counter to force DirectoryTree re-render
     let refresh_counter = use_signal(|| 0u32);
@@ -55,7 +55,7 @@ pub fn FileExplorer() -> Element {
             key: "{refresh_counter}",
 
             if let Some(root) = root_directory {
-                ParentNavigation { current_dir: root.clone(), refresh_counter }
+                DirectoryNavigation { current_dir: root.clone(), refresh_counter }
                 DirectoryTree { path: root, refresh_counter }
             } else {
                 div {
@@ -68,9 +68,13 @@ pub fn FileExplorer() -> Element {
 }
 
 #[component]
-fn ParentNavigation(current_dir: PathBuf, mut refresh_counter: Signal<u32>) -> Element {
+fn DirectoryNavigation(current_dir: PathBuf, mut refresh_counter: Signal<u32>) -> Element {
     let mut state = use_context::<AppState>();
-    let show_all_files = state.sidebar.read().show_all_files;
+    let sidebar = state.sidebar.read();
+    let show_all_files = sidebar.show_all_files;
+    let can_go_back = sidebar.can_go_back();
+    let can_go_forward = sidebar.can_go_forward();
+    drop(sidebar);
 
     let has_parent = current_dir.parent().is_some();
 
@@ -113,26 +117,51 @@ fn ParentNavigation(current_dir: PathBuf, mut refresh_counter: Signal<u32>) -> E
         div {
             class: "sidebar-header",
 
+            // History navigation buttons
+            div {
+                class: "sidebar-header-history",
+
+                // Go back button
+                button {
+                    class: "sidebar-header-history-button",
+                    class: if !can_go_back { "disabled" },
+                    disabled: !can_go_back,
+                    title: "Go back",
+                    onclick: move |_| {
+                        state.go_back_directory();
+                    },
+                    Icon {
+                        name: IconName::ChevronLeft,
+                        size: 16,
+                    }
+                }
+
+                // Go forward button
+                button {
+                    class: "sidebar-header-history-button",
+                    class: if !can_go_forward { "disabled" },
+                    disabled: !can_go_forward,
+                    title: "Go forward",
+                    onclick: move |_| {
+                        state.go_forward_directory();
+                    },
+                    Icon {
+                        name: IconName::ChevronRight,
+                        size: 16,
+                    }
+                }
+            }
+
             // Parent directory navigation or root indicator
             if has_parent {
                 div {
                     class: "sidebar-header-nav",
-                    onclick: {
-                        let current_dir = current_dir.clone();
-                        move |_| {
-                            if let Some(parent) = current_dir.parent() {
-                                state.set_root_directory(parent.to_path_buf());
-                            }
-                        }
+                    onclick: move |_| {
+                        state.go_to_parent_directory();
                     },
 
                     div {
                         class: "sidebar-header-content",
-                        Icon {
-                            name: IconName::ChevronLeft,
-                            size: 16,
-                            class: "sidebar-header-icon",
-                        }
                         span {
                             class: "sidebar-header-label",
                             "{dir_name}"

@@ -73,22 +73,20 @@ pub fn App(
         // Initialize with provided tab (preserves history)
         app_state.tabs.write()[0] = tab;
 
-        // Apply initial directory from params (resolved in create_new_main_window)
-        *app_state.directory.write() = Some(directory.clone());
-        // Update last focused state for "Last Focused" behavior
-        LAST_FOCUSED_STATE.write().directory = Some(directory);
-
         // Set initial theme
         LAST_FOCUSED_STATE.write().theme = theme;
 
-        // Apply initial sidebar settings from params
+        // Apply initial sidebar settings from params (including directory)
         {
             let mut sidebar = app_state.sidebar.write();
+            sidebar.root_directory = Some(directory.clone());
+            sidebar.push_to_history(directory.clone());
             sidebar.open = sidebar_open;
             sidebar.width = sidebar_width;
             sidebar.show_all_files = sidebar_show_all_files;
             // Update last focused state for "Last Focused" behavior
             let mut state = LAST_FOCUSED_STATE.write();
+            state.directory = Some(directory);
             state.sidebar_open = sidebar_open;
             state.sidebar_width = sidebar_width;
             state.sidebar_show_all_files = sidebar_show_all_files;
@@ -700,7 +698,7 @@ fn handle_drop_in_tab_bar(
             target_window_id: target_wid,
             tab: dragged.tab,
             target_index: Some(active.target_index),
-            source_directory: state.directory.read().clone(),
+            source_directory: state.sidebar.read().root_directory.clone(),
             request_id: uuid::Uuid::new_v4(),
         };
         TAB_TRANSFER_REQUEST.send(request).ok();
@@ -852,7 +850,7 @@ fn compute_detach_transition(
                     tab: dragged.tab.clone(),
                     position: preview_position,
                     is_single_tab: active.source_tab_count == 1,
-                    directory: state.directory.read().clone(),
+                    directory: state.sidebar.read().root_directory.clone(),
                     sidebar: state.sidebar.read().clone(),
                     theme: *state.current_theme.read(),
                     size: win.inner_size().to_logical::<u32>(win.scale_factor()),
