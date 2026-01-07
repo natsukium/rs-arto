@@ -12,6 +12,7 @@ use crate::events::{
     TabTransferRequest, TabTransferResponse, TAB_TRANSFER_REQUEST, TAB_TRANSFER_RESPONSE,
 };
 use crate::state::AppState;
+use crate::utils::file_operations;
 
 #[component]
 pub fn TabItem(
@@ -24,6 +25,7 @@ pub fn TabItem(
     let mut state = use_context::<AppState>();
     let tab_name = tab.display_name();
     let transferable = is_tab_transferable(&tab.content);
+    let file_path = tab.file().map(|p| p.to_path_buf());
 
     let mut show_context_menu = use_signal(|| false);
     let mut context_menu_position = use_signal(|| (0, 0));
@@ -116,6 +118,47 @@ pub fn TabItem(
             });
         }
         show_context_menu.set(false);
+    };
+
+    // Handler for "Copy File Path"
+    let handle_copy_path = {
+        let file_path = file_path.clone();
+        move |_| {
+            if let Some(ref path) = file_path {
+                file_operations::copy_to_clipboard(&path.to_string_lossy());
+            }
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Reload"
+    let handle_reload = move |_| {
+        state.reload_current_tab();
+        show_context_menu.set(false);
+    };
+
+    // Handler for "Set Parent as Root"
+    let handle_set_parent_as_root = {
+        let file_path = file_path.clone();
+        move |_| {
+            if let Some(ref path) = file_path {
+                if let Some(parent) = path.parent() {
+                    state.set_root_directory(parent.to_path_buf());
+                }
+            }
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Reveal in Finder"
+    let handle_reveal_in_finder = {
+        let file_path = file_path.clone();
+        move |_| {
+            if let Some(ref path) = file_path {
+                file_operations::reveal_in_finder(path);
+            }
+            show_context_menu.set(false);
+        }
     };
 
     // Handler for "Move to Window" (Two-Phase Commit)
@@ -227,9 +270,14 @@ pub fn TabItem(
         if *show_context_menu.read() {
             TabContextMenu {
                 position: *context_menu_position.read(),
+                file_path: file_path.clone(),
                 on_close: move |_| show_context_menu.set(false),
+                on_copy_path: handle_copy_path,
+                on_reload: handle_reload,
+                on_set_parent_as_root: handle_set_parent_as_root,
                 on_open_in_new_window: handle_open_in_new_window,
                 on_move_to_window: handle_move_to_window,
+                on_reveal_in_finder: handle_reveal_in_finder,
                 other_windows: other_windows.read().clone(),
                 disabled: !transferable,
             }

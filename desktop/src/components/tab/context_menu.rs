@@ -1,16 +1,26 @@
+use std::path::PathBuf;
+
 use dioxus::desktop::tao::window::WindowId;
 use dioxus::prelude::*;
+
+use crate::components::icon::{Icon, IconName};
 
 #[component]
 pub fn TabContextMenu(
     position: (i32, i32),
+    file_path: Option<PathBuf>,
     on_close: EventHandler<()>,
+    on_copy_path: EventHandler<()>,
+    on_reload: EventHandler<()>,
+    on_set_parent_as_root: EventHandler<()>,
     on_open_in_new_window: EventHandler<()>,
     on_move_to_window: EventHandler<WindowId>,
+    on_reveal_in_finder: EventHandler<()>,
     other_windows: Vec<(WindowId, String)>,
     #[props(default = false)] disabled: bool,
 ) -> Element {
     let mut show_submenu = use_signal(|| false);
+    let has_file = file_path.is_some();
 
     rsx! {
         // Backdrop to close menu on outside click
@@ -25,20 +35,16 @@ pub fn TabContextMenu(
             style: "left: {position.0}px; top: {position.1}px;",
             onclick: move |evt| evt.stop_propagation(),
 
-            // Open in New Window
-            div {
-                class: if disabled { "context-menu-item disabled" } else { "context-menu-item" },
-                onclick: move |_| {
-                    if !disabled {
-                        on_open_in_new_window.call(());
-                    }
-                },
-                "Open in New Window"
+            // === Section 1: Window operations ===
+            ContextMenuItem {
+                label: "Open in New Window",
+                disabled: disabled,
+                on_click: move |_| on_open_in_new_window.call(()),
             }
 
             // Move to Window (with submenu)
             div {
-                class: if disabled { "context-menu-item disabled" } else { "context-menu-item" },
+                class: if disabled { "context-menu-item disabled" } else { "context-menu-item has-submenu" },
                 onmouseenter: move |_| {
                     if !disabled {
                         show_submenu.set(true);
@@ -46,7 +52,7 @@ pub fn TabContextMenu(
                 },
                 onmouseleave: move |_| show_submenu.set(false),
 
-                "Move to Window"
+                span { class: "context-menu-label", "Move to Window" }
                 span { class: "submenu-arrow", "›" }
 
                 if *show_submenu.read() {
@@ -77,6 +83,84 @@ pub fn TabContextMenu(
                     }
                 }
             }
+
+            // === Section 2: File operations ===
+            ContextMenuSeparator {}
+
+            ContextMenuItem {
+                label: "Copy File Path",
+                icon: Some(IconName::Copy),
+                disabled: !has_file,
+                on_click: move |_| on_copy_path.call(()),
+            }
+
+            ContextMenuItem {
+                label: "Reveal in Finder",
+                icon: Some(IconName::Folder),
+                disabled: !has_file,
+                on_click: move |_| on_reveal_in_finder.call(()),
+            }
+
+            // === Section 3: Tab operations ===
+            ContextMenuSeparator {}
+
+            ContextMenuItem {
+                label: "Set Parent as Root",
+                icon: Some(IconName::FolderOpen),
+                disabled: !has_file,
+                on_click: move |_| on_set_parent_as_root.call(()),
+            }
+
+            ContextMenuItem {
+                label: "Reload",
+                icon: Some(IconName::Refresh),
+                on_click: move |_| on_reload.call(()),
+            }
         }
+    }
+}
+
+// ============================================================================
+// Helper Components
+// ============================================================================
+
+#[derive(Props, Clone, PartialEq)]
+struct ContextMenuItemProps {
+    label: &'static str,
+    #[props(default)]
+    icon: Option<IconName>,
+    #[props(default = false)]
+    disabled: bool,
+    on_click: EventHandler<()>,
+}
+
+#[component]
+fn ContextMenuItem(props: ContextMenuItemProps) -> Element {
+    rsx! {
+        div {
+            class: if props.disabled { "context-menu-item disabled" } else { "context-menu-item" },
+            onclick: move |_| {
+                if !props.disabled {
+                    props.on_click.call(());
+                }
+            },
+
+            if let Some(icon) = props.icon {
+                Icon {
+                    name: icon,
+                    size: 14,
+                    class: "context-menu-icon",
+                }
+            }
+
+            span { class: "context-menu-label", "{props.label}" }
+        }
+    }
+}
+
+#[component]
+fn ContextMenuSeparator() -> Element {
+    rsx! {
+        div { class: "context-menu-separator" }
     }
 }
