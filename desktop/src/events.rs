@@ -195,3 +195,21 @@ pub struct ActiveDragUpdate;
 /// This bridges the gap between DeviceEvent handlers (global) and Dioxus reactivity.
 pub static ACTIVE_DRAG_UPDATE: std::sync::LazyLock<broadcast::Sender<ActiveDragUpdate>> =
     std::sync::LazyLock::new(|| broadcast::channel(100).0);
+
+// ============================================================================
+// Cross-Window File/Directory Open Events (via Context Menu)
+// ============================================================================
+
+/// Open a file in a specific window (used by sidebar context menu "Open in Window")
+///
+/// Unlike FILE_OPEN_BROADCAST which is handled by the focused window,
+/// this event targets a specific window by its WindowId.
+pub static OPEN_FILE_IN_WINDOW: std::sync::LazyLock<broadcast::Sender<(WindowId, PathBuf)>> =
+    std::sync::LazyLock::new(|| broadcast::channel(10).0);
+
+/// Open a directory in a specific window (used by sidebar context menu "Open in Window")
+///
+/// Unlike DIRECTORY_OPEN_BROADCAST which affects all windows,
+/// this event targets a specific window by its WindowId.
+pub static OPEN_DIRECTORY_IN_WINDOW: std::sync::LazyLock<broadcast::Sender<(WindowId, PathBuf)>> =
+    std::sync::LazyLock::new(|| broadcast::channel(10).0);

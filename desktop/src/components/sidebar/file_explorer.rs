@@ -1,12 +1,14 @@
+use dioxus::desktop::window;
 use dioxus::document;
 use dioxus::prelude::*;
 use std::cmp::Ordering;
 use std::fs;
 use std::path::PathBuf;
 
+use super::context_menu::{SidebarContextMenu, SidebarItemKind};
 use crate::components::icon::{Icon, IconName};
 use crate::state::AppState;
-use crate::utils::file::is_markdown_file;
+use crate::utils::{file::is_markdown_file, file_operations};
 use crate::watcher::FILE_WATCHER;
 
 // Sort entries: directories first, then files, both alphabetically
@@ -311,7 +313,7 @@ fn DirectoryTree(path: PathBuf, refresh_counter: Signal<u32>) -> Element {
 }
 
 #[component]
-fn FileTreeNode(path: PathBuf, depth: usize, refresh_counter: Signal<u32>) -> Element {
+fn FileTreeNode(path: PathBuf, depth: usize, mut refresh_counter: Signal<u32>) -> Element {
     let mut state = use_context::<AppState>();
 
     let is_dir = path.is_dir();
@@ -341,6 +343,119 @@ fn FileTreeNode(path: PathBuf, depth: usize, refresh_counter: Signal<u32>) -> El
     // Copy feedback state
     let mut is_copied = use_signal(|| false);
 
+    // Context menu state
+    let mut show_context_menu = use_signal(|| false);
+    let mut context_menu_position = use_signal(|| (0, 0));
+    let mut other_windows = use_signal(Vec::new);
+
+    // Handle right-click to show context menu
+    let handle_context_menu = {
+        let path = path.clone();
+        move |evt: Event<MouseData>| {
+            evt.prevent_default();
+            evt.stop_propagation();
+            let mouse_data = evt.data();
+            context_menu_position.set((
+                mouse_data.client_coordinates().x as i32,
+                mouse_data.client_coordinates().y as i32,
+            ));
+
+            // Refresh window list
+            let windows = crate::window::main::list_visible_main_windows();
+            let current_id = window().id();
+            other_windows.set(
+                windows
+                    .iter()
+                    .filter(|w| w.window.id() != current_id)
+                    .map(|w| (w.window.id(), w.window.title()))
+                    .collect(),
+            );
+
+            show_context_menu.set(true);
+            tracing::trace!(?path, "Context menu opened");
+        }
+    };
+
+    // Handler for "Open File" or "Open Directory"
+    let handle_open = {
+        let path = path.clone();
+        move |_| {
+            if is_dir {
+                state.set_root_directory(&path);
+            } else {
+                state.open_file(&path);
+            }
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Open in New Window"
+    let handle_open_in_new_window = {
+        let path = path.clone();
+        move |_| {
+            let path = path.clone();
+            spawn(async move {
+                let (tab, directory) = if is_dir {
+                    (crate::state::Tab::default(), Some(path))
+                } else {
+                    (
+                        crate::state::Tab::new(&path),
+                        path.parent().map(|p| p.to_path_buf()),
+                    )
+                };
+
+                let params = crate::window::main::CreateMainWindowConfigParams {
+                    directory,
+                    ..Default::default()
+                };
+                crate::window::main::create_new_main_window(tab, params).await;
+            });
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Open in Window" (open in existing window)
+    let handle_open_in_window = {
+        let path = path.clone();
+        move |target_id: dioxus::desktop::tao::window::WindowId| {
+            let path = path.clone();
+            spawn(async move {
+                if is_dir {
+                    // For directories, broadcast to change root directory
+                    let _ = crate::events::OPEN_DIRECTORY_IN_WINDOW.send((target_id, path));
+                } else {
+                    // For files, broadcast to open file
+                    let _ = crate::events::OPEN_FILE_IN_WINDOW.send((target_id, path));
+                }
+            });
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Copy File Path" / "Copy Directory Path"
+    let handle_copy_path = {
+        let path = path.clone();
+        move |_| {
+            file_operations::copy_to_clipboard(&path.to_string_lossy());
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Reveal in Finder"
+    let handle_reveal_in_finder = {
+        let path = path.clone();
+        move |_| {
+            file_operations::reveal_in_finder(&path);
+            show_context_menu.set(false);
+        }
+    };
+
+    // Handler for "Reload"
+    let handle_reload = move |_| {
+        refresh_counter.set(refresh_counter() + 1);
+        show_context_menu.set(false);
+    };
+
     rsx! {
         div {
             class: "sidebar-tree-node",
@@ -349,6 +464,7 @@ fn FileTreeNode(path: PathBuf, depth: usize, refresh_counter: Signal<u32>) -> El
             div {
                 class: "sidebar-tree-node-content",
                 style: "{indent_style}",
+                oncontextmenu: handle_context_menu,
 
                 // Directory: chevron toggles expansion, folder+label changes root
                 if is_dir {
@@ -453,6 +569,23 @@ fn FileTreeNode(path: PathBuf, depth: usize, refresh_counter: Signal<u32>) -> El
                         }
                     }
                 }
+            }
+        }
+
+        // Context menu
+        if *show_context_menu.read() {
+            SidebarContextMenu {
+                position: *context_menu_position.read(),
+                path: path.clone(),
+                kind: if is_dir { SidebarItemKind::Directory } else { SidebarItemKind::File },
+                on_close: move |_| show_context_menu.set(false),
+                on_open: handle_open,
+                on_open_in_new_window: handle_open_in_new_window,
+                on_move_to_window: handle_open_in_window,
+                on_copy_path: handle_copy_path,
+                on_reveal_in_finder: handle_reveal_in_finder,
+                on_reload: handle_reload,
+                other_windows: other_windows.read().clone(),
             }
         }
     }

@@ -20,6 +20,7 @@ use crate::assets::MAIN_SCRIPT;
 use crate::drag;
 use crate::events::{
     ActiveDragUpdate, ACTIVE_DRAG_UPDATE, DIRECTORY_OPEN_BROADCAST, FILE_OPEN_BROADCAST,
+    OPEN_DIRECTORY_IN_WINDOW, OPEN_FILE_IN_WINDOW,
 };
 use crate::menu;
 use crate::state::{AppState, PersistedState, Tab, LAST_FOCUSED_STATE};
@@ -213,6 +214,9 @@ pub fn App(
 
     // Listen for directory open broadcasts from background process
     setup_directory_open_listener(state);
+
+    // Listen for cross-window file/directory open events (from sidebar context menu)
+    setup_cross_window_open_listeners(state);
 
     // Update window title when active tab changes
     use_effect(move || {
@@ -487,6 +491,41 @@ fn setup_directory_open_listener(mut state: AppState) {
                 tracing::info!("Opening directory from broadcast: {:?}", dir);
                 state.set_root_directory(dir.clone());
                 // Optionally show the sidebar if it's hidden
+                if !state.sidebar.read().open {
+                    state.toggle_sidebar();
+                }
+            }
+        }
+    });
+}
+
+/// Setup listeners for cross-window file/directory open events (from sidebar context menu)
+fn setup_cross_window_open_listeners(mut state: AppState) {
+    let current_window_id = window().id();
+
+    // Listen for "Open in Window" file events
+    use_future(move || async move {
+        let mut rx = OPEN_FILE_IN_WINDOW.subscribe();
+
+        while let Ok((target_window_id, path)) = rx.recv().await {
+            // Only handle if this window is the target
+            if target_window_id == current_window_id {
+                tracing::info!(?path, "Opening file from cross-window request");
+                state.open_file(path);
+            }
+        }
+    });
+
+    // Listen for "Open in Window" directory events
+    use_future(move || async move {
+        let mut rx = OPEN_DIRECTORY_IN_WINDOW.subscribe();
+
+        while let Ok((target_window_id, path)) = rx.recv().await {
+            // Only handle if this window is the target
+            if target_window_id == current_window_id {
+                tracing::info!(?path, "Opening directory from cross-window request");
+                state.set_root_directory(path.clone());
+                // Show the sidebar if it's hidden
                 if !state.sidebar.read().open {
                     state.toggle_sidebar();
                 }
