@@ -462,6 +462,12 @@ fn FileTreeNode(path: PathBuf, depth: usize, mut refresh_counter: Signal<u32>) -
             class: "sidebar-tree-node",
             class: if is_active { "active" },
 
+            // Full-row clickable design:
+            // - Parent row (this div): Fallback handler for empty space clicks
+            // - Chevron: Expand/collapse (stops propagation)
+            // - Folder/File icon+label: Navigate/open (stops propagation)
+            // This allows the entire row to be interactive while providing distinct
+            // click areas for different actions.
             div {
                 class: "sidebar-tree-node-content",
                 style: "{indent_style}",
