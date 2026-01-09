@@ -3,6 +3,7 @@ use dioxus::prelude::*;
 use std::path::PathBuf;
 
 use super::persistence::LAST_FOCUSED_STATE;
+use crate::components::right_sidebar::RightSidebarTab;
 use crate::markdown::HeadingInfo;
 use crate::theme::Theme;
 
@@ -40,8 +41,9 @@ pub struct AppState {
     pub current_theme: Signal<Theme>,
     pub zoom_level: Signal<f64>,
     pub sidebar: Signal<Sidebar>,
-    pub toc_open: Signal<bool>,
-    pub toc_width: Signal<f64>,
+    pub right_sidebar_open: Signal<bool>,
+    pub right_sidebar_width: Signal<f64>,
+    pub right_sidebar_tab: Signal<RightSidebarTab>,
     pub toc_headings: Signal<Vec<HeadingInfo>>,
     pub position: Signal<LogicalPosition<i32>>,
     pub size: Signal<LogicalSize<u32>>,
@@ -62,8 +64,9 @@ impl Default for AppState {
             current_theme: Signal::new(persisted.theme),
             zoom_level: Signal::new(1.0),
             sidebar: Signal::new(Sidebar::default()),
-            toc_open: Signal::new(persisted.toc_open),
-            toc_width: Signal::new(persisted.toc_width),
+            right_sidebar_open: Signal::new(persisted.right_sidebar_open),
+            right_sidebar_width: Signal::new(persisted.right_sidebar_width),
+            right_sidebar_tab: Signal::new(persisted.right_sidebar_tab),
             toc_headings: Signal::new(Vec::new()),
             position: Signal::new(Default::default()),
             size: Signal::new(Default::default()),
@@ -126,11 +129,23 @@ impl AppState {
         }
     }
 
-    /// Toggle TOC panel visibility
-    pub fn toggle_toc(&mut self) {
-        let new_state = !*self.toc_open.read();
-        self.toc_open.set(new_state);
-        LAST_FOCUSED_STATE.write().toc_open = new_state;
+    /// Toggle right sidebar visibility
+    pub fn toggle_right_sidebar(&mut self) {
+        let new_state = !*self.right_sidebar_open.read();
+        self.right_sidebar_open.set(new_state);
+        LAST_FOCUSED_STATE.write().right_sidebar_open = new_state;
+    }
+
+    /// Set right sidebar width
+    pub fn set_right_sidebar_width(&mut self, width: f64) {
+        self.right_sidebar_width.set(width);
+        LAST_FOCUSED_STATE.write().right_sidebar_width = width;
+    }
+
+    /// Set right sidebar active tab
+    pub fn set_right_sidebar_tab(&mut self, tab: RightSidebarTab) {
+        self.right_sidebar_tab.set(tab);
+        LAST_FOCUSED_STATE.write().right_sidebar_tab = tab;
     }
 
     /// Toggle search bar visibility

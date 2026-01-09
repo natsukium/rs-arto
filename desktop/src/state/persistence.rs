@@ -6,7 +6,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
-use crate::config::DEFAULT_TOC_WIDTH;
+use crate::components::right_sidebar::RightSidebarTab;
+use crate::config::DEFAULT_RIGHT_SIDEBAR_WIDTH;
 use crate::state::AppState;
 use crate::theme::Theme;
 
@@ -54,8 +55,9 @@ pub struct PersistedState {
     pub sidebar_open: bool,
     pub sidebar_width: f64,
     pub sidebar_show_all_files: bool,
-    pub toc_open: bool,
-    pub toc_width: f64,
+    pub right_sidebar_open: bool,
+    pub right_sidebar_width: f64,
+    pub right_sidebar_tab: RightSidebarTab,
     pub window_position: Position,
     pub window_size: Size,
 }
@@ -68,8 +70,9 @@ impl Default for PersistedState {
             sidebar_open: false,
             sidebar_width: 280.0,
             sidebar_show_all_files: false,
-            toc_open: false,
-            toc_width: DEFAULT_TOC_WIDTH,
+            right_sidebar_open: false,
+            right_sidebar_width: DEFAULT_RIGHT_SIDEBAR_WIDTH,
+            right_sidebar_tab: RightSidebarTab::default(),
             window_position: Position::default(),
             window_size: Size::default(),
         }
@@ -85,8 +88,9 @@ impl From<&AppState> for PersistedState {
             sidebar_open: sidebar.open,
             sidebar_width: sidebar.width,
             sidebar_show_all_files: sidebar.show_all_files,
-            toc_open: *state.toc_open.read(),
-            toc_width: *state.toc_width.read(),
+            right_sidebar_open: *state.right_sidebar_open.read(),
+            right_sidebar_width: *state.right_sidebar_width.read(),
+            right_sidebar_tab: *state.right_sidebar_tab.read(),
             window_position: (*state.position.read()).into(),
             window_size: (*state.size.read()).into(),
         }
@@ -139,8 +143,9 @@ impl PersistedState {
             sidebar_open = self.sidebar_open,
             sidebar_width = self.sidebar_width,
             sidebar_show_all_files = self.sidebar_show_all_files,
-            toc_open = self.toc_open,
-            toc_width = self.toc_width,
+            right_sidebar_open = self.right_sidebar_open,
+            right_sidebar_width = self.right_sidebar_width,
+            right_sidebar_tab = ?self.right_sidebar_tab,
             "Saving persisted state"
         );
 

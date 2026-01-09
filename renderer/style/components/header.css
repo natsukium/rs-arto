@@ -181,7 +181,7 @@
 }
 
 /* TOC toggle button - matches sidebar toggle style */
-.header-right .toc-toggle-button {
+.header-right .right-sidebar-toggle-button {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 4px;

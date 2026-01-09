@@ -1,0 +1,191 @@
+/* Right Sidebar container */
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 0;
+  min-width: 0;
+  max-width: 50vw;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.right-sidebar.visible {
+  /* Width is set via inline style */
+}
+
+.right-sidebar.resizing {
+  transition: none; /* Disable transition during resize */
+}
+
+/* Resize handle (left side) */
+.right-sidebar-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.right-sidebar-resize-handle:hover,
+.right-sidebar-resize-handle.resizing {
+  background-color: var(--primary-color);
+  opacity: 0.3;
+}
+
+.right-sidebar-resize-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 60px;
+  background-color: var(--text-secondary);
+  opacity: 0.4;
+  border-radius: 1px;
+}
+
+/* Tab bar */
+.right-sidebar-tabs {
+  display: flex;
+  padding: 12px 16px 8px;
+  flex-shrink: 0;
+  margin-left: 8px; /* Account for resize handle */
+}
+
+.right-sidebar-tab {
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  transition: font-weight 0.15s;
+}
+
+.right-sidebar-tab.active {
+  font-weight: 600;
+}
+
+.tab-badge {
+  padding: 1px 5px;
+  background: var(--accent-bg);
+  color: white;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* Content area */
+.right-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-left: 8px; /* Account for resize handle */
+}
+
+.right-sidebar:not(.visible) .right-sidebar-content {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Section title (shared) */
+.right-sidebar-section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 12px 16px 8px;
+  margin: 0;
+}
+
+/* Contents tab (TOC) */
+.contents-tab {
+  padding-bottom: 16px;
+}
+
+.contents-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.contents-item {
+  padding: 0;
+}
+
+.contents-item-button {
+  display: block;
+  width: 100%;
+  padding: 6px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.contents-item-button:hover {
+  opacity: 1;
+  background: var(--hover-bg);
+}
+
+/* Heading level indentation */
+.contents-item[data-level="1"] .contents-item-button {
+  padding-left: 16px;
+  font-weight: 600;
+}
+.contents-item[data-level="2"] .contents-item-button {
+  padding-left: 24px;
+  font-weight: 500;
+}
+.contents-item[data-level="3"] .contents-item-button {
+  padding-left: 32px;
+}
+.contents-item[data-level="4"] .contents-item-button {
+  padding-left: 40px;
+  font-size: 12px;
+}
+.contents-item[data-level="5"] .contents-item-button {
+  padding-left: 48px;
+  font-size: 12px;
+}
+.contents-item[data-level="6"] .contents-item-button {
+  padding-left: 56px;
+  font-size: 12px;
+}
+
+/* Empty states */
+.contents-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--text-secondary);
+}
+
+/* Scrollbar styling */
+.right-sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.right-sidebar-content::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 2px;
+}
+
+.right-sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}

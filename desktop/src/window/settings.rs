@@ -253,17 +253,17 @@ pub fn get_toc_preference(is_first_window: bool) -> TocPreference {
     let cfg = CONFIG.read();
     choose_by_behavior(
         is_first_window,
-        cfg.toc.on_startup,
-        cfg.toc.on_new_window,
+        cfg.right_sidebar.on_startup,
+        cfg.right_sidebar.on_new_window,
         || TocPreference {
-            open: cfg.toc.default_open,
-            width: cfg.toc.default_width,
+            open: cfg.right_sidebar.default_open,
+            width: cfg.right_sidebar.default_width,
         },
         || {
             let state = LAST_FOCUSED_STATE.read();
             TocPreference {
-                open: state.toc_open,
-                width: state.toc_width,
+                open: state.right_sidebar_open,
+                width: state.right_sidebar_width,
             }
         },
     )
