@@ -3,13 +3,13 @@ use crate::config::{Config, NewWindowBehavior, StartupBehavior};
 use dioxus::prelude::*;
 
 #[component]
-pub fn TocTab(
+pub fn RightSidebarTab(
     config: Signal<Config>,
     has_changes: Signal<bool>,
-    current_toc_width: f64,
+    current_right_sidebar_width: f64,
 ) -> Element {
     // Extract values upfront to avoid holding read guard across closures
-    let toc = config.read().toc.clone();
+    let right_sidebar = config.read().right_sidebar.clone();
 
     rsx! {
         div {
@@ -22,27 +22,27 @@ pub fn TocTab(
                 div {
                     class: "preference-item-header",
                     label { "Open by Default" }
-                    p { class: "preference-description", "Whether the table of contents panel is open when starting." }
+                    p { class: "preference-description", "Whether the right sidebar panel is open when starting." }
                 }
                 OptionCards {
-                    name: "toc-default-open".to_string(),
+                    name: "right-sidebar-default-open".to_string(),
                     options: vec![
                         OptionCardItem {
                             icon: None,
                             value: false,
                             title: "Closed".to_string(),
-                            description: Some("TOC panel closed by default".to_string()),
+                            description: Some("Right sidebar closed by default".to_string()),
                         },
                         OptionCardItem {
                             icon: None,
                             value: true,
                             title: "Open".to_string(),
-                            description: Some("TOC panel open by default".to_string()),
+                            description: Some("Right sidebar open by default".to_string()),
                         },
                     ],
-                    selected: toc.default_open,
+                    selected: right_sidebar.default_open,
                     on_change: move |new_state| {
-                        config.write().toc.default_open = new_state;
+                        config.write().right_sidebar.default_open = new_state;
                         has_changes.set(true);
                     },
                 }
@@ -53,19 +53,19 @@ pub fn TocTab(
                 div {
                     class: "preference-item-header",
                     label { "Default Width" }
-                    p { class: "preference-description", "The default TOC panel width in pixels." }
+                    p { class: "preference-description", "The default right sidebar panel width in pixels." }
                 }
                 SliderInput {
-                    value: toc.default_width,
+                    value: right_sidebar.default_width,
                     min: 150.0,
                     max: 400.0,
                     step: 10.0,
                     unit: "px".to_string(),
                     on_change: move |new_width| {
-                        config.write().toc.default_width = new_width;
+                        config.write().right_sidebar.default_width = new_width;
                         has_changes.set(true);
                     },
-                    current_value: Some(current_toc_width),
+                    current_value: Some(current_right_sidebar_width),
                 }
             }
 
@@ -76,10 +76,10 @@ pub fn TocTab(
                 div {
                     class: "preference-item-header",
                     label { "On Startup" }
-                    p { class: "preference-description", "TOC panel state when the application starts." }
+                    p { class: "preference-description", "Right sidebar panel state when the application starts." }
                 }
                 OptionCards {
-                    name: "toc-startup".to_string(),
+                    name: "right-sidebar-startup".to_string(),
                     options: vec![
                         OptionCardItem {
                             icon: None,
@@ -94,9 +94,9 @@ pub fn TocTab(
                             description: Some("Resume from last closed window".to_string()),
                         },
                     ],
-                    selected: toc.on_startup,
+                    selected: right_sidebar.on_startup,
                     on_change: move |new_behavior| {
-                        config.write().toc.on_startup = new_behavior;
+                        config.write().right_sidebar.on_startup = new_behavior;
                         has_changes.set(true);
                     },
                 }
@@ -107,10 +107,10 @@ pub fn TocTab(
                 div {
                     class: "preference-item-header",
                     label { "On New Window" }
-                    p { class: "preference-description", "TOC panel state in new windows." }
+                    p { class: "preference-description", "Right sidebar panel state in new windows." }
                 }
                 OptionCards {
-                    name: "toc-new-window".to_string(),
+                    name: "right-sidebar-new-window".to_string(),
                     options: vec![
                         OptionCardItem {
                             icon: None,
@@ -125,9 +125,9 @@ pub fn TocTab(
                             description: Some("Same as current window".to_string()),
                         },
                     ],
-                    selected: toc.on_new_window,
+                    selected: right_sidebar.on_new_window,
                     on_change: move |new_behavior| {
-                        config.write().toc.on_new_window = new_behavior;
+                        config.write().right_sidebar.on_new_window = new_behavior;
                         has_changes.set(true);
                     },
                 }

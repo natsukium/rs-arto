@@ -183,13 +183,13 @@ pub fn Header() -> Element {
                 // Theme selector
                 ThemeSelector { current_theme: state.current_theme }
 
-                // TOC toggle button
+                // Right sidebar toggle button
                 button {
-                    class: "toc-toggle-button",
-                    class: if *state.toc_open.read() { "active" },
-                    title: "Toggle Table of Contents",
+                    class: "right-sidebar-toggle-button",
+                    class: if *state.right_sidebar_open.read() { "active" },
+                    title: "Toggle Right Sidebar",
                     onclick: move |_| {
-                        state.toggle_toc();
+                        state.toggle_right_sidebar();
                     },
                     Icon {
                         name: IconName::List,

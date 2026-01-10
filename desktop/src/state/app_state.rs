@@ -1,9 +1,12 @@
 use dioxus::desktop::tao::dpi::{LogicalPosition, LogicalSize};
 use dioxus::prelude::*;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use super::persistence::LAST_FOCUSED_STATE;
+use crate::components::right_sidebar::RightSidebarTab;
 use crate::markdown::HeadingInfo;
+use crate::pinned_search::PinnedSearchId;
 use crate::theme::Theme;
 
 mod sidebar;
@@ -11,6 +14,21 @@ mod tabs;
 
 pub use sidebar::Sidebar;
 pub use tabs::{Tab, TabContent};
+
+/// Information about a single search match for display in the Search tab.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SearchMatch {
+    /// 0-based index of this match
+    pub index: usize,
+    /// The matched text itself
+    pub text: String,
+    /// Surrounding context including the match
+    pub context: String,
+    /// Start position of match within context (byte index)
+    pub context_start: usize,
+    /// End position of match within context (byte index)
+    pub context_end: usize,
+}
 
 /// Per-window application state.
 ///
@@ -40,8 +58,9 @@ pub struct AppState {
     pub current_theme: Signal<Theme>,
     pub zoom_level: Signal<f64>,
     pub sidebar: Signal<Sidebar>,
-    pub toc_open: Signal<bool>,
-    pub toc_width: Signal<f64>,
+    pub right_sidebar_open: Signal<bool>,
+    pub right_sidebar_width: Signal<f64>,
+    pub right_sidebar_tab: Signal<RightSidebarTab>,
     pub toc_headings: Signal<Vec<HeadingInfo>>,
     pub position: Signal<LogicalPosition<i32>>,
     pub size: Signal<LogicalSize<u32>>,
@@ -51,6 +70,12 @@ pub struct AppState {
     pub search_current_index: Signal<usize>,
     /// Initial search text to populate when opening search bar
     pub search_initial_text: Signal<Option<String>>,
+    /// Current search query string (for display in Search tab)
+    pub search_query: Signal<Option<String>>,
+    /// All search matches with context (for Search tab display)
+    pub search_matches: Signal<Vec<SearchMatch>>,
+    /// Pinned search matches by ID (for Search tab display)
+    pub pinned_matches: Signal<HashMap<PinnedSearchId, Vec<SearchMatch>>>,
 }
 
 impl Default for AppState {
@@ -62,8 +87,9 @@ impl Default for AppState {
             current_theme: Signal::new(persisted.theme),
             zoom_level: Signal::new(1.0),
             sidebar: Signal::new(Sidebar::default()),
-            toc_open: Signal::new(persisted.toc_open),
-            toc_width: Signal::new(persisted.toc_width),
+            right_sidebar_open: Signal::new(persisted.right_sidebar_open),
+            right_sidebar_width: Signal::new(persisted.right_sidebar_width),
+            right_sidebar_tab: Signal::new(persisted.right_sidebar_tab),
             toc_headings: Signal::new(Vec::new()),
             position: Signal::new(Default::default()),
             size: Signal::new(Default::default()),
@@ -72,6 +98,9 @@ impl Default for AppState {
             search_match_count: Signal::new(0),
             search_current_index: Signal::new(0),
             search_initial_text: Signal::new(None),
+            search_query: Signal::new(None),
+            search_matches: Signal::new(Vec::new()),
+            pinned_matches: Signal::new(HashMap::new()),
         }
     }
 }
@@ -126,28 +155,53 @@ impl AppState {
         }
     }
 
-    /// Toggle TOC panel visibility
-    pub fn toggle_toc(&mut self) {
-        let new_state = !*self.toc_open.read();
-        self.toc_open.set(new_state);
-        LAST_FOCUSED_STATE.write().toc_open = new_state;
+    /// Toggle right sidebar visibility
+    pub fn toggle_right_sidebar(&mut self) {
+        let new_state = !*self.right_sidebar_open.read();
+        self.right_sidebar_open.set(new_state);
+        LAST_FOCUSED_STATE.write().right_sidebar_open = new_state;
+    }
+
+    /// Set right sidebar width
+    pub fn set_right_sidebar_width(&mut self, width: f64) {
+        self.right_sidebar_width.set(width);
+        LAST_FOCUSED_STATE.write().right_sidebar_width = width;
+    }
+
+    /// Set right sidebar active tab
+    pub fn set_right_sidebar_tab(&mut self, tab: RightSidebarTab) {
+        self.right_sidebar_tab.set(tab);
+        LAST_FOCUSED_STATE.write().right_sidebar_tab = tab;
     }
 
     /// Toggle search bar visibility
+    ///
+    /// Note: Does NOT clear search state when closing. Search highlights and
+    /// results persist until the user explicitly clears them (via clear button)
+    /// or the content changes. This enables the "persistent highlighting" feature.
     pub fn toggle_search(&mut self) {
         let new_state = !*self.search_open.read();
         self.search_open.set(new_state);
-        if !new_state {
-            // Clear match count when closing
-            self.search_match_count.set(0);
-            self.search_current_index.set(0);
-        }
     }
 
-    /// Update search results from JavaScript callback
+    /// Update search results from JavaScript callback (basic count/current only)
     pub fn update_search_results(&mut self, count: usize, current: usize) {
         self.search_match_count.set(count);
         self.search_current_index.set(current);
+    }
+
+    /// Update full search results from JavaScript callback (includes match details)
+    pub fn update_search_results_full(
+        &mut self,
+        query: Option<String>,
+        count: usize,
+        current: usize,
+        matches: Vec<SearchMatch>,
+    ) {
+        self.search_query.set(query);
+        self.search_match_count.set(count);
+        self.search_current_index.set(current);
+        self.search_matches.set(matches);
     }
 
     /// Open search bar and populate with given text
@@ -156,5 +210,10 @@ impl AppState {
         self.search_initial_text.set(text);
         // Open search bar
         self.search_open.set(true);
+    }
+
+    /// Update pinned search matches from JavaScript callback
+    pub fn update_pinned_matches(&mut self, matches: HashMap<PinnedSearchId, Vec<SearchMatch>>) {
+        self.pinned_matches.set(matches);
     }
 }

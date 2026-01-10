@@ -9,13 +9,15 @@ use mouse_position::mouse_position::Mouse;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use super::content::{close_context_menu, Content, ContentContextMenu, CONTENT_CONTEXT_MENU};
+use super::content::{
+    close_context_menu, use_search_handler, Content, ContentContextMenu, CONTENT_CONTEXT_MENU,
+};
 use super::header::Header;
 use super::icon::{Icon, IconName};
+use super::right_sidebar::RightSidebar;
 use super::search_bar::SearchBar;
 use super::sidebar::Sidebar;
 use super::tab::TabBar;
-use super::toc_panel::TocPanel;
 use crate::assets::MAIN_SCRIPT;
 use crate::drag;
 use crate::events::{
@@ -92,14 +94,14 @@ pub fn App(
             state.sidebar_show_all_files = sidebar_show_all_files;
         }
 
-        // Apply initial TOC settings from params
+        // Apply initial right sidebar settings from params
         {
-            app_state.toc_open.set(toc_open);
-            app_state.toc_width.set(toc_width);
+            app_state.right_sidebar_open.set(toc_open);
+            app_state.right_sidebar_width.set(toc_width);
             // Update last focused state for "Last Focused" behavior
             let mut state = LAST_FOCUSED_STATE.write();
-            state.toc_open = toc_open;
-            state.toc_width = toc_width;
+            state.right_sidebar_open = toc_open;
+            state.right_sidebar_width = toc_width;
         }
 
         let metrics = crate::window::metrics::capture_window_metrics(&window().window);
@@ -136,6 +138,9 @@ pub fn App(
             .await;
         });
     });
+
+    // Setup search handlers at App level (window-wide feature)
+    use_search_handler(state);
 
     // Handle menu events (only state-dependent events, not global ones)
     use_muda_event_handler(move |event| {
@@ -341,7 +346,7 @@ pub fn App(
                 Content {},
             }
 
-            TocPanel { headings: state.toc_headings.read().clone() }
+            RightSidebar { headings: state.toc_headings.read().clone() }
 
             // Drag and drop overlay
             if is_dragging() {

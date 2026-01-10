@@ -1,6 +1,7 @@
 use super::tabs::{
-    about_tab::AboutTab, directory_tab::DirectoryTab, sidebar_tab::SidebarTab, theme_tab::ThemeTab,
-    toc_tab::TocTab, window_position_tab::WindowPositionTab, window_size_tab::WindowSizeTab,
+    about_tab::AboutTab, directory_tab::DirectoryTab, right_sidebar_tab::RightSidebarTab,
+    sidebar_tab::SidebarTab, theme_tab::ThemeTab, window_position_tab::WindowPositionTab,
+    window_size_tab::WindowSizeTab,
 };
 use crate::components::icon::{Icon, IconName};
 use crate::config::{Config, CONFIG};
@@ -16,7 +17,7 @@ pub enum PreferencesTab {
     WindowPosition,
     WindowSize,
     Sidebar,
-    Toc,
+    RightSidebar,
     Directory,
     About,
 }
@@ -123,13 +124,13 @@ pub fn PreferencesView() -> Element {
                         span { "Sidebar" }
                     }
                     button {
-                        class: if current_tab == PreferencesTab::Toc { "nav-tab active" } else { "nav-tab" },
+                        class: if current_tab == PreferencesTab::RightSidebar { "nav-tab active" } else { "nav-tab" },
                         onclick: move |_| {
-                            active_tab.set(PreferencesTab::Toc);
-                            *LAST_PREFERENCES_TAB.write() = PreferencesTab::Toc;
+                            active_tab.set(PreferencesTab::RightSidebar);
+                            *LAST_PREFERENCES_TAB.write() = PreferencesTab::RightSidebar;
                         },
                         Icon { name: IconName::List, size: 18 }
-                        span { "Table of Contents" }
+                        span { "Right Sidebar" }
                     }
                     button {
                         class: if current_tab == PreferencesTab::Directory { "nav-tab active" } else { "nav-tab" },
@@ -210,11 +211,11 @@ pub fn PreferencesView() -> Element {
                                 current_sidebar_width: state.sidebar.read().width,
                             }
                         },
-                        PreferencesTab::Toc => rsx! {
-                            TocTab {
+                        PreferencesTab::RightSidebar => rsx! {
+                            RightSidebarTab {
                                 config,
                                 has_changes,
-                                current_toc_width: *state.toc_width.read(),
+                                current_right_sidebar_width: *state.right_sidebar_width.read(),
                             }
                         },
                         PreferencesTab::Directory => rsx! {

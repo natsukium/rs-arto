@@ -1,8 +1,6 @@
 .search-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  flex-direction: column;
   background: var(--bg-color);
   /* Overlay positioning - below header */
   position: absolute;
@@ -21,8 +19,31 @@
   pointer-events: auto;
 }
 
-.search-bar .icon {
+/* Main search row */
+.search-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.search-bar-main .icon {
   opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* Pinned chips row */
+.search-bar-pinned {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 16px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-bar-pinned-label {
+  font-size: 12px;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
@@ -37,7 +58,7 @@
   padding: 6px 28px 6px 12px; /* Right padding for clear button */
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background: var(--bg-primary);
+  background: var(--bg-color);
   color: var(--text-color);
   font-size: 14px;
   transition: border-color 0.2s;
@@ -79,7 +100,8 @@
 }
 
 .search-nav-button,
-.search-close-button {
+.search-close-button,
+.search-pin-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,12 +123,14 @@
 }
 
 .search-nav-button:hover:not(:disabled),
-.search-close-button:hover {
+.search-close-button:hover,
+.search-pin-button:hover:not(:disabled) {
   background: var(--hover-bg);
   opacity: 1;
 }
 
-.search-nav-button:disabled {
+.search-nav-button:disabled,
+.search-pin-button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
@@ -132,4 +156,35 @@
   border-radius: 2px;
   padding: 1px 2px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Pinned search highlights (5 colors, no yellow) */
+.pinned-highlight {
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.pinned-highlight[data-color="green"] { background-color: var(--pinned-green); }
+.pinned-highlight[data-color="blue"] { background-color: var(--pinned-blue); }
+.pinned-highlight[data-color="pink"] { background-color: var(--pinned-pink); }
+.pinned-highlight[data-color="orange"] { background-color: var(--pinned-orange); }
+.pinned-highlight[data-color="purple"] { background-color: var(--pinned-purple); }
+
+/* Disabled: override github-markdown-css .markdown-body mark background */
+.markdown-body .pinned-highlight-disabled { background-color: transparent; }
+
+/* Flash animation when scrolling to pinned match */
+.pinned-highlight-flash {
+  animation: pinned-flash 0.5s ease-out;
+}
+
+@keyframes pinned-flash {
+  0% {
+    outline: 2px solid var(--accent-bg);
+    outline-offset: 2px;
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
 }
