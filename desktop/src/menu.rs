@@ -398,18 +398,10 @@ pub fn handle_menu_event_with_state(event: &MenuEvent, state: &mut AppState) -> 
             state.zoom_level.set((current - 0.1).max(0.1));
         }
         MenuId::GoBack => {
-            state.update_current_tab(|tab| {
-                if let Some(path) = tab.history.go_back() {
-                    tab.content = crate::state::TabContent::File(path.to_owned());
-                }
-            });
+            state.save_scroll_and_go_back();
         }
         MenuId::GoForward => {
-            state.update_current_tab(|tab| {
-                if let Some(path) = tab.history.go_forward() {
-                    tab.content = crate::state::TabContent::File(path.to_owned());
-                }
-            });
+            state.save_scroll_and_go_forward();
         }
         MenuId::RevealInFinder => {
             if let Some(file) = get_current_file(state) {
