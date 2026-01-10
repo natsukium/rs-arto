@@ -6,6 +6,94 @@ paths: "renderer/style/**/*.css, desktop/src/components/**/*.rs"
 
 This rule provides design guidelines for UI development in Arto.
 
+## CSS Design Tokens
+
+Arto uses a comprehensive design token system defined in `variables.css` for consistency and maintainability.
+
+### Available Design Tokens
+
+**Transitions:**
+```css
+--transition-fast: 0.15s;     /* Quick state changes */
+--transition-normal: 0.2s;    /* Default transitions */
+--transition-slow: 0.3s;      /* Slower transitions (sidebar width) */
+```
+
+**Border Radius:**
+```css
+--radius-xs: 2px;    /* Scrollbar, small separators */
+--radius-sm: 4px;    /* Buttons, inputs */
+--radius-md: 6px;    /* Medium elements */
+--radius-lg: 8px;    /* Cards, dropdowns */
+--radius-full: 50%;  /* Circular elements */
+```
+
+**Font Sizes:**
+```css
+--font-size-xs: 11px;    /* Very small text */
+--font-size-sm: 12px;    /* Small labels, tab text */
+--font-size-md: 13px;    /* Small text, sidebar labels */
+--font-size-base: 14px;  /* Default text, headers */
+--font-size-lg: 15px;    /* Large text */
+```
+
+**Opacity:**
+```css
+--opacity-subtle: 0.3;      /* Missing items, very muted */
+--opacity-muted: 0.5;       /* Default icons, placeholders */
+--opacity-secondary: 0.6;   /* Secondary text */
+--opacity-hover: 0.8;       /* Hover state for icons */
+```
+
+**Z-Index Semantic Scale:**
+```css
+--z-resize-handle: 10;
+--z-search-bar: 50;
+--z-header: 60;
+--z-pinned-chips: 99;
+--z-dropdown: 200;
+--z-floating-tab: 1000;
+--z-tab-actions: 1001;
+--z-modal-backdrop: 10000;
+--z-context-menu-backdrop: 10001;
+--z-context-menu: 10002;
+--z-context-submenu: 10003;
+```
+
+**Shadows:**
+```css
+--shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);   /* Subtle elevation */
+--shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.15);   /* Small dropdowns */
+--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);  /* Cards, menus (most common) */
+--shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);   /* High elevation */
+```
+
+**Status Colors:**
+```css
+--success-color: #22c55e;  /* Success states */
+--error-color: #dc3545;    /* Error states */
+--warning-color: #dc8a2f;  /* Warning states */
+```
+
+**Search Highlight (theme-aware):**
+```css
+--search-highlight: var(--light/dark-search-highlight);  /* Auto-switches with theme */
+```
+
+### Variable Naming Convention
+
+**Theme-specific variables follow prefix pattern:**
+```
+--{theme}-{category}-{property}
+```
+
+Examples:
+- `--light-bg-color`, `--dark-bg-color`
+- `--light-pinned-green`, `--dark-pinned-green`
+- `--light-scrollbar-track`, `--dark-scrollbar-track`
+
+**Always use CSS variables instead of hardcoded values** for consistency and theme support.
+
 ## Design Principles
 
 ### Keep it Subtle (控えめに)
@@ -14,7 +102,7 @@ This rule provides design guidelines for UI development in Arto.
 - Use `transparent` backgrounds where possible
 - Use thin borders (`1px`) instead of thick (`2px`)
 - Prefer `font-weight: 400-500` over bold for navigation
-- Icon opacity: `0.5` default, `0.8` on hover/active
+- Icon opacity: `var(--opacity-muted)` default, `var(--opacity-hover)` on hover/active
 
 ### Visual Consistency
 
@@ -97,9 +185,9 @@ preferences-page (全体: flex column, min-width: 600px)
 
 | Button Type | Padding | Font Size | Border Radius |
 |-------------|---------|-----------|---------------|
-| Primary action (Save) | 8px 16px | 13px | 6px |
-| Secondary (Browse, Use Current) | 10px 18px | 14px | 8px |
-| Icon button | 0 (40x40px) | - | 8px |
+| Primary action (Save) | 8px 16px | var(--font-size-md) | var(--radius-md) |
+| Secondary (Browse, Use Current) | 10px 18px | var(--font-size-base) | var(--radius-lg) |
+| Icon button | 0 (40x40px) | - | var(--radius-lg) |
 
 ## Typography & Spacing
 
@@ -107,11 +195,11 @@ preferences-page (全体: flex column, min-width: 600px)
 
 | Element | Font Size | Font Weight |
 |---------|-----------|-------------|
-| Navigation tab | 13px | 400 (500 when active) |
-| Section title | 12px | 600, uppercase |
-| Item label | 15px | 600 |
-| Description | 13px | 400 |
-| Button/Input | 14px | 500 |
+| Navigation tab | var(--font-size-md) | 400 (500 when active) |
+| Section title | var(--font-size-sm) | 600, uppercase |
+| Item label | var(--font-size-lg) | 600 |
+| Description | var(--font-size-md) | 400 |
+| Button/Input | var(--font-size-base) | 500 |
 
 ### Spacing Guidelines
 
@@ -120,7 +208,7 @@ preferences-page (全体: flex column, min-width: 600px)
 - Settings content padding: 24px 48px
 - Item padding: 20px vertical
 - Gap between elements: 12-16px
-- Border radius: 8px for cards/inputs, 4-6px for small elements
+- Border radius: var(--radius-lg) for cards/inputs, var(--radius-sm/md) for small elements
 
 ## Full-Page Content Sections (About, Welcome)
 
@@ -152,7 +240,7 @@ For pages like About, Welcome that fill the entire content area, follow the patt
 ### Key Patterns
 
 - Use `fadeInUp` animation for smooth entry
-- Cards for links/hints: `background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem`
+- Cards for links/hints: `background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem`
 - Opacity-based text hierarchy: title `0.9`, description `0.6`, footer `0.4`
 - Link items: `display: flex; gap: 0.75rem; opacity: 0.7` with hover → `opacity: 1`
 
@@ -281,7 +369,7 @@ div {
   top: var(--menu-y);
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 20px);
-  z-index: 1000;
+  z-index: var(--z-context-menu);
 }
 
 .context-submenu {
