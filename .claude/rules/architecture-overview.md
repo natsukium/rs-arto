@@ -1,6 +1,6 @@
-# Architecture Overview: Config, Session, State
+# Architecture Overview: Config, PersistedState, State
 
-Understanding the relationship between Config, Session, and State modules.
+Understanding the relationship between Config, PersistedState, and State modules.
 
 ## Three-Layer Architecture
 
@@ -131,7 +131,7 @@ pub struct AppState {
    ├─> PersistedState { last_theme: "dark" }
    └─> PersistedState { last_directory: "/path/to/project" }
 
-3. Apply startup behavior
+3. Apply startup behavior using window::settings helpers
    ├─> Theme: "last_closed" → Use persisted.last_theme ("dark")
    └─> Directory: "default" → Use config.default_directory
 
@@ -146,16 +146,16 @@ pub struct AppState {
    ├─> Config { theme.on_new_window: "last_focused" }
    └─> Config { directory.on_new_window: "last_focused" }
 
-2. Read in-memory globals
-   ├─> LAST_SELECTED_THEME (from last focused window)
-   └─> LAST_FOCUSED_DIRECTORY (from last focused window)
+2. Read in-memory LAST_FOCUSED_STATE
+   ├─> LAST_FOCUSED_STATE.theme (from last focused window)
+   └─> LAST_FOCUSED_STATE.directory (from last focused window)
 
-3. Apply new window behavior
-   ├─> Theme: "last_focused" → Use LAST_SELECTED_THEME
-   └─> Directory: "last_focused" → Use LAST_FOCUSED_DIRECTORY
+3. Apply new window behavior using window::settings helpers
+   ├─> Theme: "last_focused" → Use LAST_FOCUSED_STATE.theme
+   └─> Directory: "last_focused" → Use LAST_FOCUSED_STATE.directory
 
 4. Create AppState with computed values
-   └─> AppState { current_theme: <from memory>, sidebar.root_directory: <from memory> }
+   └─> AppState { current_theme: <from LAST_FOCUSED_STATE>, sidebar.root_directory: <from LAST_FOCUSED_STATE> }
 ```
 
 ### Window Close Flow
@@ -168,28 +168,26 @@ pub struct AppState {
    ├─> sidebar.width: 320.0
    └─> sidebar.hide_non_markdown: false
 
-2. Construct Session
-   └─> PersistedState {
-         last_theme: Some("dark"),
-         last_directory: Some("/path/to/project"),
-         last_sidebar_visible: Some(true),
-         last_sidebar_width: Some(320.0),
-         last_show_all_files: Some(true),
-       }
+2. Construct PersistedState
+   └─> let mut persisted = PersistedState::from(&state);
+       persisted.window_position = window_metrics.position;
+       persisted.window_size = window_metrics.size;
 
 3. Save to state.json
-   └─> ~/Library/Application Support/arto/state.json
+   └─> persisted.save();
+       → ~/Library/Application Support/arto/state.json
 
-4. Update in-memory SESSION global
-   └─> For next startup (if app reopens immediately)
+4. Update in-memory LAST_FOCUSED_STATE global
+   └─> LAST_FOCUSED_STATE.write() updates window metrics
+       → For next "new window" (used immediately if creating windows)
 ```
 
 ## Decision Matrix
 
 **When adding new settings, decide:**
 
-| Question | Config | Session | State |
-|----------|--------|---------|-------|
+| Question | Config | PersistedState | State |
+|----------|--------|----------------|-------|
 | Should user be able to edit it? | ✓ | ✗ | ✗ |
 | Should it persist between app launches? | ✓ | ✓ | ✗ |
 | Is it different per window? | ✗ | ✗ | ✓ |
@@ -198,98 +196,127 @@ pub struct AppState {
 **Examples:**
 
 - **Default theme** → Config (user sets preference, applies to all windows)
-- **Last used theme** → Session (app remembers, restores on startup)
+- **Last used theme** → PersistedState (app remembers, restores on startup)
 - **Current theme** → State (per-window, might differ during session)
 - **Open tabs** → State only (never saved)
-- **Sidebar width** → Config (default), Session (last used), State (current)
+- **Sidebar width** → Config (default), PersistedState (last used), State (current)
 
 ## Common Patterns
 
 ### Reading a value on startup
 
 ```rust
-// In config/getters.rs
-pub async fn get_startup_theme() -> ThemePreference {
-    let config = CONFIG.lock().await;
-    let session = SESSION.lock().await;
+// In window/settings.rs
+pub fn get_theme_preference(is_first_window: bool) -> ThemePreference {
+    let config = CONFIG.read();
+    let last_focused = LAST_FOCUSED_STATE.read();
 
-    match config.theme.on_startup {
-        StartupBehavior::Default => config.theme.default_theme,
-        StartupBehavior::LastClosed => session.last_theme.unwrap_or(config.theme.default_theme),
+    if is_first_window {
+        match config.theme.on_startup {
+            StartupBehavior::Default => config.theme.default_theme,
+            StartupBehavior::LastClosed => last_focused.theme.unwrap_or(config.theme.default_theme),
+        }
+    } else {
+        match config.theme.on_new_window {
+            NewWindowBehavior::Default => config.theme.default_theme,
+            NewWindowBehavior::LastFocused => last_focused.theme.unwrap_or(config.theme.default_theme),
+        }
     }
 }
 ```
 
 **Priority:**
-1. Check config behavior setting (`on_startup`)
+1. Check config behavior setting (`on_startup` or `on_new_window`)
 2. If "default" → use `config.theme.default_theme`
-3. If "last_closed" → use `session.last_theme` (fallback to config default)
+3. If "last_closed"/"last_focused" → use `LAST_FOCUSED_STATE.theme` (fallback to config default)
 
 ### Updating a value during runtime
 
 ```rust
-// In App component
+// In App component (or AppState methods)
 let mut state = use_context::<AppState>();
 
-// User changes theme
-state.current_theme.set(ThemePreference::Dark);
+// User changes theme - AppState automatically updates LAST_FOCUSED_STATE
+state.set_theme(ThemePreference::Dark);
 
-// Also update global for "last_focused" behavior
-*LAST_SELECTED_THEME.lock().unwrap() = ThemePreference::Dark;
+// Inside AppState::set_theme()
+pub fn set_theme(&mut self, theme: ThemePreference) {
+    self.current_theme.set(theme);
+
+    // Update global for "last_focused" behavior
+    let mut last_focused = LAST_FOCUSED_STATE.write();
+    last_focused.theme = Some(theme);
+}
 ```
 
 **Two updates:**
 1. Update `AppState` for current window
-2. Update global static for next "new window"
+2. Update `LAST_FOCUSED_STATE` global for next "new window"
 
 ### Saving on window close
 
 ```rust
 // In App component use_drop()
-let session = PersistedState {
-    last_directory: sidebar.root_directory.clone(),
-    last_theme: Some(*current_theme.read()),
-    last_sidebar_visible: Some(sidebar.is_visible),
-    last_sidebar_width: Some(sidebar.width),
-    last_show_all_files: Some(!sidebar.hide_non_markdown),
-};
+let mut persisted = PersistedState::from(&state);
 
-save_sync(&session);
+// Capture window metrics
+let window_metrics = crate::window::metrics::capture_window_metrics(&window().window);
+persisted.window_position = window_metrics.position;
+persisted.window_size = window_metrics.size;
+
+// Update LAST_FOCUSED_STATE
+{
+    let mut last_focused = LAST_FOCUSED_STATE.write();
+    last_focused.window_position = window_metrics.position;
+    last_focused.window_size = window_metrics.size;
+}
+
+// Save to disk
+persisted.save();
 ```
 
 **What happens:**
-1. Collect values from current `AppState`
-2. Construct `Session` struct
-3. Save to `state.json` and update `SESSION` global
+1. Collect values from current `AppState` via `From<&AppState>` trait
+2. Add window metrics (position, size)
+3. Update `LAST_FOCUSED_STATE` global
+4. Save to `state.json` (blocking operation)
 
-## In-Memory Globals
+## In-Memory Global: LAST_FOCUSED_STATE
 
-**Additional layer for "last_focused" behavior:**
+**Consolidated global for "last_focused" behavior:**
 
 ```rust
-// In state.rs
-pub static LAST_SELECTED_THEME: LazyLock<Mutex<ThemePreference>> = ...;
-pub static LAST_FOCUSED_DIRECTORY: LazyLock<Mutex<Option<PathBuf>>> = ...;
-pub static LAST_FOCUSED_SIDEBAR_VISIBLE: LazyLock<Mutex<Option<bool>>> = ...;
+// In state/persistence.rs
+pub static LAST_FOCUSED_STATE: LazyLock<RwLock<PersistedState>> =
+    LazyLock::new(|| RwLock::new(PersistedState::load()));
 ```
 
 **Purpose:** Remember the last focused window's state for "new window" behavior
 
-**Differences from Session:**
-- Session → Last **closed** window (persisted to disk)
-- In-memory globals → Last **focused** window (memory only)
+**Key characteristics:**
+- Single `PersistedState` instance holding ALL last-focused values
+- Updated by `AppState` methods when values change (theme, directory, sidebar, etc.)
+- Updated in `use_drop()` when window closes (window metrics)
+- Memory-only during app session, but initialized from disk (`state.json`)
 
-**Why both?**
-- Startup uses last closed window (most recent state before app quit)
-- New window uses last focused window (current active window's state)
+**Differences from state.json:**
+- **state.json** → Last **closed** window (persisted to disk on window close)
+- **LAST_FOCUSED_STATE** → Last **focused** window (updated in real-time, saved on close)
+
+**Why this design?**
+- Startup uses `state.json` (most recent state before app quit)
+- New window uses `LAST_FOCUSED_STATE` (current active window's state)
+- Consolidated design eliminates multiple per-field globals
 
 ## Summary
 
-| Aspect | Config | PersistedState | State | In-Memory Globals |
-|--------|--------|----------------|-------|-------------------|
+| Aspect | Config | state.json | AppState | LAST_FOCUSED_STATE |
+|--------|--------|-----------|----------|-------------------|
+| **Type** | `Config` | `PersistedState` | `AppState` | `PersistedState` |
 | **Storage** | config.json | state.json | Memory | Memory |
 | **Scope** | App-wide | App-wide | Per-window | App-wide |
 | **Lifetime** | Permanent | Permanent | Window | App session |
 | **Edited by** | User | App | App | App |
+| **Updated** | Manual/UI | On close | Real-time | Real-time |
 | **Used for** | Defaults | Last closed | Current | Last focused |
-| **Example** | default_theme | last_theme | current_theme | LAST_SELECTED_THEME |
+| **Example field** | `default_theme` | `last_theme` | `current_theme` | `theme` |
