@@ -1,7 +1,15 @@
+mod pinned_results;
+mod utils;
+
 use dioxus::document;
 use dioxus::prelude::*;
 
+use crate::components::icon::{Icon, IconName};
+use crate::pinned_search::{PinnedSearch, PINNED_SEARCHES, PINNED_SEARCHES_CHANGED};
 use crate::state::{AppState, SearchMatch};
+
+use pinned_results::PinnedResultsSection;
+use utils::split_context;
 
 #[component]
 pub fn SearchTab() -> Element {
@@ -9,43 +17,57 @@ pub fn SearchTab() -> Element {
     let query = state.search_query.read().clone();
     let matches = state.search_matches.read().clone();
     let current = *state.search_current_index.read();
+    let pinned_matches = state.pinned_matches.read().clone();
+
+    // Local signal for pinned searches (updated via broadcast)
+    let mut pinned_searches = use_signal(|| PINNED_SEARCHES.read().pinned_searches.clone());
+
+    // Subscribe to pinned search changes (JS sync is handled by SearchBar)
+    use_future(move || async move {
+        let mut rx = PINNED_SEARCHES_CHANGED.subscribe();
+        while rx.recv().await.is_ok() {
+            let searches = PINNED_SEARCHES.read().pinned_searches.clone();
+            pinned_searches.set(searches);
+        }
+    });
+
+    // Get all pinned searches for results display (including disabled)
+    let all_pinned: Vec<PinnedSearch> = pinned_searches.read().clone();
+
+    let has_active_search = query.as_ref().map(|q| !q.is_empty()).unwrap_or(false);
+    let has_pinned = !pinned_searches.read().is_empty();
+    let has_any_content = has_active_search || has_pinned;
 
     rsx! {
         div {
             class: "search-tab",
 
+            // Active search results
             if let Some(q) = query {
                 if !q.is_empty() {
-                    // Header with query and count
-                    div {
-                        class: "search-tab-header",
-                        span { class: "search-tab-query", "\"{q}\"" }
-                        span { class: "search-tab-count", " - {matches.len()} matches" }
+                    SearchResultsSection {
+                        query: q,
+                        matches,
+                        current_index: current,
                     }
-
-                    // Match list
-                    if matches.is_empty() {
-                        div {
-                            class: "search-tab-empty",
-                            "No matches found"
-                        }
-                    } else {
-                        ul {
-                            class: "search-tab-list",
-                            for m in matches.iter() {
-                                SearchMatchItem {
-                                    match_info: m.clone(),
-                                    is_current: m.index + 1 == current,
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Empty query state
-                    SearchTabPlaceholder {}
                 }
-            } else {
-                // No search active
+            }
+
+            // Pinned search results (for all pinned searches, including disabled)
+            for pinned in all_pinned.iter() {
+                if let Some(matches) = pinned_matches.get(&pinned.id) {
+                    if !matches.is_empty() {
+                        PinnedResultsSection {
+                            key: "{pinned.id}",
+                            pinned: pinned.clone(),
+                            matches: matches.clone(),
+                        }
+                    }
+                }
+            }
+
+            // Empty state placeholder
+            if !has_any_content {
                 SearchTabPlaceholder {}
             }
         }
@@ -57,7 +79,55 @@ fn SearchTabPlaceholder() -> Element {
     rsx! {
         div {
             class: "search-tab-placeholder",
-            "Type in the search bar to find matches in this document"
+            "Type in the search bar or add pinned searches"
+        }
+    }
+}
+
+/// Active search results section.
+#[component]
+fn SearchResultsSection(query: String, matches: Vec<SearchMatch>, current_index: usize) -> Element {
+    let mut expanded = use_signal(|| true);
+    let chevron = if *expanded.read() {
+        IconName::ChevronDown
+    } else {
+        IconName::ChevronRight
+    };
+
+    rsx! {
+        div {
+            class: "search-results-section",
+
+            // Header (clickable to toggle)
+            div {
+                class: "search-tab-header",
+                onclick: move |_| expanded.toggle(),
+
+                Icon { name: chevron, size: 14 }
+                Icon { name: IconName::Search, size: 14 }
+                span { class: "search-tab-query", "\"{query}\"" }
+                span { class: "search-tab-count", " - {matches.len()} matches" }
+            }
+
+            // Match list (collapsible)
+            if *expanded.read() {
+                if matches.is_empty() {
+                    div {
+                        class: "search-tab-empty",
+                        "No matches found"
+                    }
+                } else {
+                    ul {
+                        class: "search-tab-list",
+                        for m in matches.iter() {
+                            SearchMatchItem {
+                                match_info: m.clone(),
+                                is_current: m.index + 1 == current_index,
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -70,7 +140,6 @@ fn SearchMatchItem(match_info: SearchMatch, is_current: bool) -> Element {
     let end = match_info.context_end;
 
     // Split context into before, matched, and after parts
-    // Use char boundaries to handle UTF-8 correctly
     let (before, matched, after) = split_context(&context, start, end);
 
     let class = if is_current {
@@ -89,32 +158,6 @@ fn SearchMatchItem(match_info: SearchMatch, is_current: bool) -> Element {
             span { class: "search-match-context", "{after}" }
         }
     }
-}
-
-/// Split context string into (before, matched, after) parts.
-/// The start/end are character indices from JavaScript (UTF-16 code units),
-/// which we need to convert to byte indices for Rust string slicing.
-fn split_context(context: &str, char_start: usize, char_end: usize) -> (String, String, String) {
-    // Convert character indices to byte indices
-    // JavaScript's string.length counts UTF-16 code units, but for BMP characters
-    // (which includes most text), this equals the number of Unicode scalar values
-    let byte_start = char_index_to_byte_index(context, char_start);
-    let byte_end = char_index_to_byte_index(context, char_end);
-
-    let before = &context[..byte_start];
-    let matched = &context[byte_start..byte_end];
-    let after = &context[byte_end..];
-
-    (before.to_string(), matched.to_string(), after.to_string())
-}
-
-/// Convert a character index to a byte index in a UTF-8 string.
-/// Returns the byte position of the nth character, or the string length if n exceeds char count.
-fn char_index_to_byte_index(s: &str, char_index: usize) -> usize {
-    s.char_indices()
-        .nth(char_index)
-        .map(|(byte_pos, _)| byte_pos)
-        .unwrap_or(s.len())
 }
 
 /// Navigate to a specific match by index.

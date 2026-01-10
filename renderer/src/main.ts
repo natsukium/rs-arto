@@ -21,6 +21,8 @@ declare global {
         navigateTo: typeof findInPage.navigateTo;
         clear: typeof findInPage.clear;
         reapply: typeof findInPage.reapply;
+        setPinned: typeof findInPage.setPinned;
+        scrollToPinnedMatch: typeof findInPage.scrollToPinnedMatch;
       };
     };
   }
@@ -62,6 +64,8 @@ export function init(): void {
       navigateTo: findInPage.navigateTo,
       clear: findInPage.clear,
       reapply: findInPage.reapply,
+      setPinned: findInPage.setPinned,
+      scrollToPinnedMatch: findInPage.scrollToPinnedMatch,
     },
   };
 

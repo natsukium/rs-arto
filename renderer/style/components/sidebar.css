@@ -253,7 +253,7 @@
 
 .sidebar-header-toolbar-button:hover {
   border-color: var(--border-color);
-  background: var(--bg-primary);
+  background: var(--bg-color);
 }
 
 .sidebar-header-toolbar-button .icon {

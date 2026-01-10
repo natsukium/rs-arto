@@ -1,13 +1,34 @@
+/**
+ * Pinned search definition from Rust.
+ */
+export interface PinnedSearchDef {
+  /** Unique identifier */
+  id: string;
+  /** Search pattern (plain text) */
+  pattern: string;
+  /** Highlight color: green, blue, pink, orange, purple */
+  color: "green" | "blue" | "pink" | "orange" | "purple";
+  /** Case-sensitive matching */
+  caseSensitive: boolean;
+  /** Whether this search is disabled (still collect matches, but don't highlight) */
+  disabled: boolean;
+}
+
 interface SearchState {
   query: string;
   currentIndex: number;
   highlightElements: HTMLElement[];
+  // Pinned search state
+  pinnedSearches: PinnedSearchDef[];
+  pinnedHighlights: Map<string, HTMLElement[]>;
 }
 
 const state: SearchState = {
   query: "",
   currentIndex: 0,
   highlightElements: [],
+  pinnedSearches: [],
+  pinnedHighlights: new Map(),
 };
 
 /**
@@ -34,6 +55,8 @@ export interface SearchResult {
   total: number;
   current: number;
   matches: SearchMatch[];
+  /** Pinned search matches keyed by pinned search ID */
+  pinnedMatches: Record<string, SearchMatch[]>;
 }
 
 type SearchCallback = (data: {
@@ -41,16 +64,24 @@ type SearchCallback = (data: {
   current: number;
   query: string;
   matches: SearchMatch[];
+  pinnedMatches: Record<string, SearchMatch[]>;
 }) => void;
 
 let callback: SearchCallback | null = null;
 
-function highlightMatches(container: HTMLElement, query: string): number {
-  // Clear existing highlights first
-  clearHighlights();
-
+/**
+ * Apply highlights for a search query.
+ * Returns the highlight elements created.
+ */
+function applyHighlights(
+  container: HTMLElement,
+  query: string,
+  caseSensitive: boolean,
+  className: string,
+  dataAttributes?: Record<string, string>,
+): HTMLElement[] {
   if (!query || query.length === 0) {
-    return 0;
+    return [];
   }
 
   const textNodes: Text[] = [];
@@ -59,7 +90,11 @@ function highlightMatches(container: HTMLElement, query: string): number {
       const parent = node.parentElement;
       // Exclude code blocks (pre), mermaid diagrams, and already highlighted text
       // Note: inline <code> tags are intentionally searchable
-      if (parent?.closest("pre, .mermaid, .search-highlight")) {
+      if (
+        parent?.closest(
+          "pre, .mermaid, .search-highlight, .pinned-highlight, .pinned-highlight-disabled",
+        )
+      ) {
         return NodeFilter.FILTER_REJECT;
       }
       return NodeFilter.FILTER_ACCEPT;
@@ -71,19 +106,19 @@ function highlightMatches(container: HTMLElement, query: string): number {
     textNodes.push(node as Text);
   }
 
-  const queryLower = query.toLowerCase();
-  state.highlightElements = [];
+  const queryToMatch = caseSensitive ? query : query.toLowerCase();
+  const elements: HTMLElement[] = [];
 
   // Process each text node
   for (const textNode of textNodes) {
     const text = textNode.textContent || "";
-    const textLower = text.toLowerCase();
+    const textToSearch = caseSensitive ? text : text.toLowerCase();
     let startIndex = 0;
 
     // Find all matches in this text node
     const matches: { start: number; end: number }[] = [];
     while (true) {
-      const index = textLower.indexOf(queryLower, startIndex);
+      const index = textToSearch.indexOf(queryToMatch, startIndex);
       if (index === -1) break;
       matches.push({ start: index, end: index + query.length });
       startIndex = index + 1;
@@ -106,10 +141,18 @@ function highlightMatches(container: HTMLElement, query: string): number {
 
       // Highlighted match
       const mark = document.createElement("mark");
-      mark.className = "search-highlight";
+      mark.className = className;
       mark.textContent = text.slice(match.start, match.end);
+
+      // Add data attributes if provided
+      if (dataAttributes) {
+        for (const [key, value] of Object.entries(dataAttributes)) {
+          mark.setAttribute(key, value);
+        }
+      }
+
       fragment.appendChild(mark);
-      state.highlightElements.push(mark);
+      elements.push(mark);
 
       lastEnd = match.end;
     }
@@ -122,11 +165,20 @@ function highlightMatches(container: HTMLElement, query: string): number {
     parent.replaceChild(fragment, textNode);
   }
 
+  return elements;
+}
+
+function highlightMatches(container: HTMLElement, query: string): number {
+  // Clear existing search highlights first (not pinned)
+  clearSearchHighlights();
+
+  state.highlightElements = applyHighlights(container, query, false, "search-highlight");
+
   return state.highlightElements.length;
 }
 
-function clearHighlights(): void {
-  // Remove all highlight marks and restore original text
+function clearSearchHighlights(): void {
+  // Remove all search highlight marks and restore original text
   for (const mark of state.highlightElements) {
     const parent = mark.parentNode;
     if (parent) {
@@ -139,6 +191,21 @@ function clearHighlights(): void {
   }
   state.highlightElements = [];
   state.currentIndex = 0;
+}
+
+function clearPinnedHighlights(): void {
+  // Remove all pinned highlight marks (including disabled ones)
+  for (const elements of state.pinnedHighlights.values()) {
+    for (const mark of elements) {
+      const parent = mark.parentNode;
+      if (parent) {
+        const textNode = document.createTextNode(mark.textContent || "");
+        parent.replaceChild(textNode, mark);
+        parent.normalize();
+      }
+    }
+  }
+  state.pinnedHighlights.clear();
 }
 
 function navigateToMatch(direction: "next" | "prev"): number {
@@ -164,11 +231,38 @@ function navigateToMatch(direction: "next" | "prev"): number {
   return state.currentIndex + 1; // 1-based for display
 }
 
+/**
+ * Apply pinned search highlights.
+ * This should be called after DOM content changes to re-apply all pinned highlights.
+ * Disabled searches still create DOM elements but with invisible styling.
+ */
+function applyPinnedHighlights(): void {
+  const container = document.querySelector(".markdown-body");
+  if (!container) return;
+
+  // Clear existing pinned highlights
+  clearPinnedHighlights();
+
+  // Apply highlights for each pinned search
+  for (const pinned of state.pinnedSearches) {
+    // Use invisible class for disabled searches (DOM exists, but no visual highlight)
+    const className = pinned.disabled ? "pinned-highlight-disabled" : "pinned-highlight";
+    const elements = applyHighlights(
+      container as HTMLElement,
+      pinned.pattern,
+      pinned.caseSensitive,
+      className,
+      { "data-color": pinned.color, "data-pinned-id": pinned.id },
+    );
+    state.pinnedHighlights.set(pinned.id, elements);
+  }
+}
+
 export function find(query: string): void {
   state.query = query;
   const container = document.querySelector(".markdown-body");
   if (!container) {
-    callback?.({ count: 0, current: 0, query: "", matches: [] });
+    callback?.({ count: 0, current: 0, query: "", matches: [], pinnedMatches: {} });
     return;
   }
 
@@ -180,20 +274,29 @@ export function find(query: string): void {
     state.highlightElements[0]?.classList.add("search-highlight-active");
   }
 
-  const matches = collectMatches();
-  callback?.({ count, current: count > 0 ? 1 : 0, query: state.query, matches });
+  const matches = collectSearchMatches();
+  const pinnedMatches = collectPinnedMatches();
+  callback?.({ count, current: count > 0 ? 1 : 0, query: state.query, matches, pinnedMatches });
 }
 
 export function navigate(direction: "next" | "prev"): void {
   const current = navigateToMatch(direction);
-  const matches = collectMatches();
-  callback?.({ count: state.highlightElements.length, current, query: state.query, matches });
+  const matches = collectSearchMatches();
+  const pinnedMatches = collectPinnedMatches();
+  callback?.({
+    count: state.highlightElements.length,
+    current,
+    query: state.query,
+    matches,
+    pinnedMatches,
+  });
 }
 
 export function clear(): void {
   state.query = "";
-  clearHighlights();
-  callback?.({ count: 0, current: 0, query: "", matches: [] });
+  clearSearchHighlights();
+  const pinnedMatches = collectPinnedMatches();
+  callback?.({ count: 0, current: 0, query: "", matches: [], pinnedMatches });
 }
 
 export function setup(cb: SearchCallback): void {
@@ -201,15 +304,21 @@ export function setup(cb: SearchCallback): void {
 }
 
 /**
- * Re-apply the current search query after DOM changes (e.g., tab switch).
- * This preserves the search highlight across tab navigation.
+ * Re-apply the current search query and pinned searches after DOM changes (e.g., tab switch).
+ * This preserves highlights across tab navigation.
  */
 export function reapply(): void {
-  if (!state.query) {
-    return;
+  // Re-apply pinned highlights first
+  applyPinnedHighlights();
+
+  // Then re-apply search if there's a query
+  if (state.query) {
+    find(state.query);
+  } else {
+    // Just notify with pinned matches
+    const pinnedMatches = collectPinnedMatches();
+    callback?.({ count: 0, current: 0, query: "", matches: [], pinnedMatches });
   }
-  // Re-run search with stored query
-  find(state.query);
 }
 
 /**
@@ -233,13 +342,52 @@ export function navigateTo(index: number): void {
 
   // Notify callback with unified format
   const newCurrent = index + 1;
-  const matches = collectMatches();
+  const matches = collectSearchMatches();
+  const pinnedMatches = collectPinnedMatches();
   callback?.({
     count: state.highlightElements.length,
     current: newCurrent,
     query: state.query,
     matches,
+    pinnedMatches,
   });
+}
+
+/**
+ * Set the list of pinned searches and re-apply highlights.
+ */
+export function setPinned(pinned: PinnedSearchDef[]): void {
+  state.pinnedSearches = pinned;
+  applyPinnedHighlights();
+
+  // Notify with updated matches
+  const pinnedMatches = collectPinnedMatches();
+  callback?.({
+    count: state.highlightElements.length,
+    current: state.currentIndex >= 0 ? state.currentIndex + 1 : 0,
+    query: state.query,
+    matches: collectSearchMatches(),
+    pinnedMatches,
+  });
+}
+
+/**
+ * Scroll to a pinned search match.
+ */
+export function scrollToPinnedMatch(pinnedId: string, index: number): void {
+  const elements = state.pinnedHighlights.get(pinnedId);
+  if (!elements || index < 0 || index >= elements.length) {
+    return;
+  }
+
+  const target = elements[index];
+  target?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  // Brief highlight effect
+  target?.classList.add("pinned-highlight-flash");
+  setTimeout(() => {
+    target?.classList.remove("pinned-highlight-flash");
+  }, 500);
 }
 
 /**
@@ -263,17 +411,23 @@ function getContext(
 }
 
 /**
- * Get text content before an element, up to maxChars.
+ * Get text content before an element, stopping at newlines.
  */
 function getTextBefore(element: HTMLElement, maxChars: number): string {
   let text = "";
   let node: Node | null = element;
 
   // Walk backwards through siblings and parent's previous siblings
-  while (node && text.length < maxChars) {
+  outer: while (node && text.length < maxChars) {
     if (node.previousSibling) {
       node = node.previousSibling;
       const content = getNodeTextContent(node);
+      // Stop at newline
+      const newlineIdx = content.lastIndexOf("\n");
+      if (newlineIdx !== -1) {
+        text = content.slice(newlineIdx + 1) + text;
+        break outer;
+      }
       text = content + text;
     } else {
       // Move up to parent and continue
@@ -285,26 +439,32 @@ function getTextBefore(element: HTMLElement, maxChars: number): string {
     }
   }
 
-  // Trim to maxChars from the end
+  // Trim to maxChars from the end (no ellipsis since we stop at line boundary)
   if (text.length > maxChars) {
-    text = "..." + text.slice(-maxChars);
+    text = text.slice(-maxChars);
   }
 
   return text;
 }
 
 /**
- * Get text content after an element, up to maxChars.
+ * Get text content after an element, stopping at newlines.
  */
 function getTextAfter(element: HTMLElement, maxChars: number): string {
   let text = "";
   let node: Node | null = element;
 
   // Walk forwards through siblings and parent's next siblings
-  while (node && text.length < maxChars) {
+  outer: while (node && text.length < maxChars) {
     if (node.nextSibling) {
       node = node.nextSibling;
       const content = getNodeTextContent(node);
+      // Stop at newline
+      const newlineIdx = content.indexOf("\n");
+      if (newlineIdx !== -1) {
+        text = text + content.slice(0, newlineIdx);
+        break outer;
+      }
       text = text + content;
     } else {
       // Move up to parent and continue
@@ -316,9 +476,9 @@ function getTextAfter(element: HTMLElement, maxChars: number): string {
     }
   }
 
-  // Trim to maxChars from the start
+  // Trim to maxChars from the start (no ellipsis since we stop at line boundary)
   if (text.length > maxChars) {
-    text = text.slice(0, maxChars) + "...";
+    text = text.slice(0, maxChars);
   }
 
   return text;
@@ -333,8 +493,8 @@ function getNodeTextContent(node: Node): string {
   }
   if (node.nodeType === Node.ELEMENT_NODE) {
     const el = node as HTMLElement;
-    // Skip search highlight marks to get actual text
-    if (el.classList.contains("search-highlight")) {
+    // Skip highlight marks to get actual text
+    if (el.classList.contains("search-highlight") || el.classList.contains("pinned-highlight")) {
       return el.textContent || "";
     }
     return el.textContent || "";
@@ -343,9 +503,9 @@ function getNodeTextContent(node: Node): string {
 }
 
 /**
- * Collect all match information for the Search tab.
+ * Collect all search match information for the Search tab.
  */
-function collectMatches(): SearchMatch[] {
+function collectSearchMatches(): SearchMatch[] {
   const matches: SearchMatch[] = [];
   const contextChars = 30;
 
@@ -364,4 +524,32 @@ function collectMatches(): SearchMatch[] {
   }
 
   return matches;
+}
+
+/**
+ * Collect all pinned search matches.
+ */
+function collectPinnedMatches(): Record<string, SearchMatch[]> {
+  const result: Record<string, SearchMatch[]> = {};
+  const contextChars = 30;
+
+  for (const [pinnedId, elements] of state.pinnedHighlights) {
+    const matches: SearchMatch[] = [];
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i];
+      const text = el.textContent || "";
+      const context = getContext(el, contextChars);
+
+      matches.push({
+        index: i,
+        text,
+        context: context.text,
+        contextStart: context.matchStart,
+        contextEnd: context.matchEnd,
+      });
+    }
+    result[pinnedId] = matches;
+  }
+
+  return result;
 }

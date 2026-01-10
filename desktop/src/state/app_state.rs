@@ -1,10 +1,12 @@
 use dioxus::desktop::tao::dpi::{LogicalPosition, LogicalSize};
 use dioxus::prelude::*;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use super::persistence::LAST_FOCUSED_STATE;
 use crate::components::right_sidebar::RightSidebarTab;
 use crate::markdown::HeadingInfo;
+use crate::pinned_search::PinnedSearchId;
 use crate::theme::Theme;
 
 mod sidebar;
@@ -72,6 +74,8 @@ pub struct AppState {
     pub search_query: Signal<Option<String>>,
     /// All search matches with context (for Search tab display)
     pub search_matches: Signal<Vec<SearchMatch>>,
+    /// Pinned search matches by ID (for Search tab display)
+    pub pinned_matches: Signal<HashMap<PinnedSearchId, Vec<SearchMatch>>>,
 }
 
 impl Default for AppState {
@@ -96,6 +100,7 @@ impl Default for AppState {
             search_initial_text: Signal::new(None),
             search_query: Signal::new(None),
             search_matches: Signal::new(Vec::new()),
+            pinned_matches: Signal::new(HashMap::new()),
         }
     }
 }
@@ -205,5 +210,10 @@ impl AppState {
         self.search_initial_text.set(text);
         // Open search bar
         self.search_open.set(true);
+    }
+
+    /// Update pinned search matches from JavaScript callback
+    pub fn update_pinned_matches(&mut self, matches: HashMap<PinnedSearchId, Vec<SearchMatch>>) {
+        self.pinned_matches.set(matches);
     }
 }

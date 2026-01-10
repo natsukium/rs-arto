@@ -1,7 +1,9 @@
 use dioxus::document;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
+use crate::pinned_search::PinnedSearchId;
 use crate::state::AppState;
 
 /// Data structure for a single search match from JavaScript
@@ -23,6 +25,8 @@ struct SearchResultData {
     current: usize,
     query: String,
     matches: Vec<SearchMatchData>,
+    #[serde(rename = "pinnedMatches")]
+    pinned_matches: HashMap<String, Vec<SearchMatchData>>,
 }
 
 /// Hook to setup search result handler.
@@ -48,6 +52,7 @@ pub fn use_search_handler(mut state: AppState) {
 
         spawn(async move {
             while let Ok(data) = eval_provider.recv::<SearchResultData>().await {
+                // Convert search matches
                 let matches = data
                     .matches
                     .into_iter()
@@ -67,6 +72,27 @@ pub fn use_search_handler(mut state: AppState) {
                 };
 
                 state.update_search_results_full(query, data.count, data.current, matches);
+
+                // Convert pinned matches
+                let pinned_matches: HashMap<PinnedSearchId, Vec<crate::state::SearchMatch>> = data
+                    .pinned_matches
+                    .into_iter()
+                    .map(|(id, matches)| {
+                        let converted = matches
+                            .into_iter()
+                            .map(|m| crate::state::SearchMatch {
+                                index: m.index,
+                                text: m.text,
+                                context: m.context,
+                                context_start: m.context_start,
+                                context_end: m.context_end,
+                            })
+                            .collect();
+                        (PinnedSearchId::from(id), converted)
+                    })
+                    .collect();
+
+                state.update_pinned_matches(pinned_matches);
             }
         });
     });
