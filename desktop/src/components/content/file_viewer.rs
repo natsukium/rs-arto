@@ -130,8 +130,67 @@ fn use_file_loader(
 /// Re-apply search highlighting after DOM changes.
 /// This is called after content rendering to preserve search state across tab switches.
 async fn reapply_search() {
-    // Wait a frame for DOM to update, then reapply search
-    let _ = document::eval("requestAnimationFrame(() => window.Arto.search.reapply());").await;
+    // Use MutationObserver to detect when DOM is actually updated, then reapply.
+    // This is more robust than RAF-based timing which is not guaranteed.
+    //
+    // Flow:
+    // 1. html.set() marks signal dirty (Rust side)
+    // 2. This function runs and sets up MutationObserver
+    // 3. Dioxus updates DOM (innerHTML changes)
+    // 4. MutationObserver fires → reapply() is called
+    // 5. Fallback timeout ensures reapply even if no mutation detected
+    let _ = document::eval(indoc::indoc! {r#"
+        (() => {
+            let called = false;
+            const doReapply = () => {
+                if (called) return;
+                called = true;
+                window.Arto.search.reapply();
+            };
+
+            const container = document.querySelector('.markdown-body');
+            if (!container) {
+                // Container doesn't exist yet - Dioxus may still be building the DOM.
+                // Wait for it to appear using MutationObserver on document.body.
+                const bodyObserver = new MutationObserver(() => {
+                    if (document.querySelector('.markdown-body')) {
+                        bodyObserver.disconnect();
+                        // Container appeared, wait one frame for content to render
+                        requestAnimationFrame(doReapply);
+                    }
+                });
+                bodyObserver.observe(document.body, { childList: true, subtree: true });
+
+                // Fallback timeout in case container never appears
+                setTimeout(() => {
+                    bodyObserver.disconnect();
+                    doReapply();
+                }, 100);
+                return;
+            }
+
+            const observer = new MutationObserver(() => {
+                observer.disconnect();
+                // Wait one frame after mutation to ensure rendering is complete
+                requestAnimationFrame(doReapply);
+            });
+
+            // Note: childList + subtree is sufficient for innerHTML changes.
+            // characterData is not needed since innerHTML replacement triggers childList mutations.
+            observer.observe(container, {
+                childList: true,
+                subtree: true
+            });
+
+            // Fallback: if no mutation within 100ms, reapply anyway
+            // This handles edge cases like navigating to the same file
+            setTimeout(() => {
+                observer.disconnect();
+                doReapply();
+            }, 100);
+        })();
+    "#})
+    .await;
 }
 
 /// Hook to watch file for changes and trigger reload
