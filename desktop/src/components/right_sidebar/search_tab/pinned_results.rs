@@ -24,7 +24,7 @@ pub fn PinnedResultsSection(pinned: PinnedSearch, matches: Vec<SearchMatch>) -> 
 
     rsx! {
         div {
-            class: "right-sidebar-pinned-results-section",
+            class: "right-sidebar-pinned-results",
 
             // Header: chevron + icon + chip + count (clickable to toggle)
             div {

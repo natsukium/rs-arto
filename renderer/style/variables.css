@@ -1,4 +1,67 @@
 :root {
+  /* ========================================
+     Design Tokens (Theme-independent)
+     ======================================== */
+
+  /* Transitions */
+  --transition-fast: 0.15s;
+  --transition-normal: 0.2s;
+  --transition-slow: 0.3s;
+
+  /* Border Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 50%;
+
+  /* Font Sizes */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 15px;
+
+  /* Opacity */
+  --opacity-subtle: 0.3;
+  --opacity-muted: 0.5;
+  --opacity-secondary: 0.6;
+  --opacity-hover: 0.8;
+
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-resize-handle: 10;
+  --z-search-bar: 50;
+  --z-header: 60;
+  --z-pinned-chips: 99;
+  --z-dropdown: 200;
+  --z-floating-tab: 1000;
+  --z-tab-actions: 1001;
+  --z-modal-backdrop: 10000;
+  --z-context-menu-backdrop: 10001;
+  --z-context-menu: 10002;
+  --z-context-submenu: 10003;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  /* Status Colors */
+  --success-color: #22c55e;
+  --error-color: #dc3545;
+  --warning-color: #dc8a2f;
+
+  /* Search Highlight */
+  --light-search-highlight: rgba(255, 235, 59, 0.4);
+  --dark-search-highlight: rgba(255, 235, 59, 0.3);
+  --search-highlight: var(--light-search-highlight);
+
+  /* ========================================
+     Theme Colors
+     ======================================== */
+
   /* Light theme */
   --light-bg-color: #ffffff;
   --light-text-color: #1f2328;
@@ -44,24 +107,24 @@
   --dark-copy-button-error-bg: #490202;
   --dark-copy-button-error-fg: #ff7b72;
   /* Pinned highlight colors - Light theme (lower opacity for white bg) */
-  --pinned-green-light: rgba(76, 175, 80, 0.35);
-  --pinned-blue-light: rgba(0, 188, 212, 0.35);
-  --pinned-pink-light: rgba(233, 30, 99, 0.3);
-  --pinned-orange-light: rgba(255, 152, 0, 0.35);
-  --pinned-purple-light: rgba(156, 39, 176, 0.3);
+  --light-pinned-green: rgba(76, 175, 80, 0.35);
+  --light-pinned-blue: rgba(0, 188, 212, 0.35);
+  --light-pinned-pink: rgba(233, 30, 99, 0.3);
+  --light-pinned-orange: rgba(255, 152, 0, 0.35);
+  --light-pinned-purple: rgba(156, 39, 176, 0.3);
   /* Pinned highlight colors - Dark theme (higher opacity + brighter for dark bg) */
-  --pinned-green-dark: rgba(102, 187, 106, 0.45);
-  --pinned-blue-dark: rgba(77, 208, 225, 0.45);
-  --pinned-pink-dark: rgba(240, 98, 146, 0.4);
-  --pinned-orange-dark: rgba(255, 183, 77, 0.45);
-  --pinned-purple-dark: rgba(186, 104, 200, 0.4);
+  --dark-pinned-green: rgba(102, 187, 106, 0.45);
+  --dark-pinned-blue: rgba(77, 208, 225, 0.45);
+  --dark-pinned-pink: rgba(240, 98, 146, 0.4);
+  --dark-pinned-orange: rgba(255, 183, 77, 0.45);
+  --dark-pinned-purple: rgba(186, 104, 200, 0.4);
   /* Scrollbar colors */
-  --scrollbar-track-light: #f6f8fa;
-  --scrollbar-thumb-light: #d1d9e0;
-  --scrollbar-thumb-hover-light: #959da5;
-  --scrollbar-track-dark: #0d1117;
-  --scrollbar-thumb-dark: #30363d;
-  --scrollbar-thumb-hover-dark: #484f58;
+  --light-scrollbar-track: #f6f8fa;
+  --light-scrollbar-thumb: #d1d9e0;
+  --light-scrollbar-thumb-hover: #959da5;
+  --dark-scrollbar-track: #0d1117;
+  --dark-scrollbar-thumb: #30363d;
+  --dark-scrollbar-thumb-hover: #484f58;
   /* Default theme */
   --bg-color: var(--light-bg-color);
   --text-color: var(--light-text-color);
@@ -84,14 +147,14 @@
   --copy-button-success-fg: var(--light-copy-button-success-fg);
   --copy-button-error-bg: var(--light-copy-button-error-bg);
   --copy-button-error-fg: var(--light-copy-button-error-fg);
-  --scrollbar-track: var(--scrollbar-track-light);
-  --scrollbar-thumb: var(--scrollbar-thumb-light);
-  --scrollbar-thumb-hover: var(--scrollbar-thumb-hover-light);
-  --pinned-green: var(--pinned-green-light);
-  --pinned-blue: var(--pinned-blue-light);
-  --pinned-pink: var(--pinned-pink-light);
-  --pinned-orange: var(--pinned-orange-light);
-  --pinned-purple: var(--pinned-purple-light);
+  --scrollbar-track: var(--light-scrollbar-track);
+  --scrollbar-thumb: var(--light-scrollbar-thumb);
+  --scrollbar-thumb-hover: var(--light-scrollbar-thumb-hover);
+  --pinned-green: var(--light-pinned-green);
+  --pinned-blue: var(--light-pinned-blue);
+  --pinned-pink: var(--light-pinned-pink);
+  --pinned-orange: var(--light-pinned-orange);
+  --pinned-purple: var(--light-pinned-purple);
 }
 
 [data-theme="light"] {
@@ -116,14 +179,14 @@
   --copy-button-success-fg: var(--light-copy-button-success-fg);
   --copy-button-error-bg: var(--light-copy-button-error-bg);
   --copy-button-error-fg: var(--light-copy-button-error-fg);
-  --scrollbar-track: var(--scrollbar-track-light);
-  --scrollbar-thumb: var(--scrollbar-thumb-light);
-  --scrollbar-thumb-hover: var(--scrollbar-thumb-hover-light);
-  --pinned-green: var(--pinned-green-light);
-  --pinned-blue: var(--pinned-blue-light);
-  --pinned-pink: var(--pinned-pink-light);
-  --pinned-orange: var(--pinned-orange-light);
-  --pinned-purple: var(--pinned-purple-light);
+  --scrollbar-track: var(--light-scrollbar-track);
+  --scrollbar-thumb: var(--light-scrollbar-thumb);
+  --scrollbar-thumb-hover: var(--light-scrollbar-thumb-hover);
+  --pinned-green: var(--light-pinned-green);
+  --pinned-blue: var(--light-pinned-blue);
+  --pinned-pink: var(--light-pinned-pink);
+  --pinned-orange: var(--light-pinned-orange);
+  --pinned-purple: var(--light-pinned-purple);
 }
 
 [data-theme="dark"] {
@@ -148,14 +211,15 @@
   --copy-button-success-fg: var(--dark-copy-button-success-fg);
   --copy-button-error-bg: var(--dark-copy-button-error-bg);
   --copy-button-error-fg: var(--dark-copy-button-error-fg);
-  --scrollbar-track: var(--scrollbar-track-dark);
-  --scrollbar-thumb: var(--scrollbar-thumb-dark);
-  --scrollbar-thumb-hover: var(--scrollbar-thumb-hover-dark);
-  --pinned-green: var(--pinned-green-dark);
-  --pinned-blue: var(--pinned-blue-dark);
-  --pinned-pink: var(--pinned-pink-dark);
-  --pinned-orange: var(--pinned-orange-dark);
-  --pinned-purple: var(--pinned-purple-dark);
+  --scrollbar-track: var(--dark-scrollbar-track);
+  --scrollbar-thumb: var(--dark-scrollbar-thumb);
+  --scrollbar-thumb-hover: var(--dark-scrollbar-thumb-hover);
+  --pinned-green: var(--dark-pinned-green);
+  --pinned-blue: var(--dark-pinned-blue);
+  --pinned-pink: var(--dark-pinned-pink);
+  --pinned-orange: var(--dark-pinned-orange);
+  --pinned-purple: var(--dark-pinned-purple);
+  --search-highlight: var(--dark-search-highlight);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -181,13 +245,14 @@
     --copy-button-success-fg: var(--dark-copy-button-success-fg);
     --copy-button-error-bg: var(--dark-copy-button-error-bg);
     --copy-button-error-fg: var(--dark-copy-button-error-fg);
-    --scrollbar-track: var(--scrollbar-track-dark);
-    --scrollbar-thumb: var(--scrollbar-thumb-dark);
-    --scrollbar-thumb-hover: var(--scrollbar-thumb-hover-dark);
-    --pinned-green: var(--pinned-dark-green);
-    --pinned-blue: var(--pinned-dark-blue);
-    --pinned-pink: var(--pinned-dark-pink);
-    --pinned-orange: var(--pinned-dark-orange);
-    --pinned-purple: var(--pinned-dark-purple);
+    --scrollbar-track: var(--dark-scrollbar-track);
+    --scrollbar-thumb: var(--dark-scrollbar-thumb);
+    --scrollbar-thumb-hover: var(--dark-scrollbar-thumb-hover);
+    --pinned-green: var(--dark-pinned-green);
+    --pinned-blue: var(--dark-pinned-blue);
+    --pinned-pink: var(--dark-pinned-pink);
+    --pinned-orange: var(--dark-pinned-orange);
+    --pinned-purple: var(--dark-pinned-purple);
+    --search-highlight: var(--dark-search-highlight);
   }
 }

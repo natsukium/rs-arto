@@ -13,7 +13,7 @@
   background-color: var(--bg-secondary);
   border-left: 1px solid var(--border-color);
   overflow: hidden;
-  transition: width 0.3s ease;
+  transition: width var(--transition-slow) ease;
   position: relative;
 }
 
@@ -34,14 +34,14 @@
   height: 100%;
   cursor: ew-resize;
   background-color: transparent;
-  transition: background-color 0.2s ease;
-  z-index: 10;
+  transition: background-color var(--transition-normal) ease;
+  z-index: var(--z-resize-handle);
 }
 
 .right-sidebar-resize-handle:hover,
 .right-sidebar-resize-handle.resizing {
   background-color: var(--primary-color);
-  opacity: 0.3;
+  opacity: var(--opacity-subtle);
 }
 
 .right-sidebar-resize-handle::before {
@@ -71,10 +71,10 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 400;
   color: var(--text-secondary);
-  transition: font-weight 0.15s;
+  transition: font-weight var(--transition-fast);
 }
 
 .right-sidebar-tab.active {
@@ -85,7 +85,7 @@
   padding: 1px 5px;
   background: var(--accent-bg);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   font-size: 9px;
   font-weight: 600;
 }
@@ -124,7 +124,7 @@
 .right-sidebar-search::-webkit-scrollbar-thumb,
 .right-sidebar-contents::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .right-sidebar-content::-webkit-scrollbar-thumb:hover,

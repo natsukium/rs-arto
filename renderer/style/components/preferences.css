@@ -38,13 +38,13 @@
   padding: 8px 12px;
   border: none;
   background: transparent;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
   font-weight: 400;
   font-family: inherit;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
   text-align: left;
   width: 100%;
 }
@@ -60,12 +60,12 @@
 
 .nav-tab .icon {
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 .nav-tab:hover .icon,
 .nav-tab.active .icon {
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
 }
 
 .nav-spacer {
@@ -108,7 +108,7 @@
   align-items: center;
   gap: 6px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 
 .save-status .saving::before {
@@ -117,7 +117,7 @@
   height: 14px;
   border: 1.5px solid var(--border-color);
   border-top-color: var(--text-secondary);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   animation: spin 0.8s linear infinite;
 }
 
@@ -126,7 +126,7 @@
   align-items: center;
   gap: 4px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 
 .save-status .saved::before {
@@ -137,14 +137,14 @@
 .save-status .save-button {
   padding: 8px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--accent-bg);
   color: var(--accent-fg);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .save-status .save-button:hover {
@@ -165,7 +165,7 @@
 .preference-section-title {
   margin: 0;
   padding: 0 0 12px 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -192,7 +192,7 @@
 
 .preference-item-header label {
   display: block;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 6px;
@@ -200,7 +200,7 @@
 
 .preference-description {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -216,10 +216,10 @@
   min-width: 0;
   padding: 10px 14px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--bg-secondary);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-family: inherit;
 }
 
@@ -250,7 +250,7 @@
 
 .dimension-field label {
   display: block;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 6px;
@@ -268,10 +268,10 @@
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--bg-secondary);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-family: inherit;
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
@@ -293,10 +293,10 @@
   width: 70px;
   padding: 10px 26px 10px 8px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-family: inherit;
   line-height: 1;
   appearance: none;
@@ -313,10 +313,10 @@
   align-items: center;
   padding: 0 8px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--bg-color);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-weight: 500;
 }
 
@@ -329,12 +329,12 @@
   height: 40px;
   padding: 0;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--bg-color);
   color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .directory-input .icon-button:hover {
@@ -357,10 +357,10 @@
   gap: 6px;
   padding: 16px 18px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
   text-align: center;
 }
 
@@ -381,13 +381,13 @@
 }
 
 .option-card-title {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-color);
 }
 
 .option-card-desc {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   line-height: 1.4;
 }
@@ -401,14 +401,14 @@
   padding: 14px 16px;
 }
 
-.option-card--icon .icon {
-  color: var(--text-secondary);
-  transition: color 0.15s ease;
-}
-
 .option-card--icon .option-card-title {
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+.option-card--icon .icon {
+  color: var(--text-secondary);
+  transition: color var(--transition-fast) ease;
 }
 
 .option-card--icon.selected .icon {
@@ -431,12 +431,12 @@
 
 .preferences-footer button {
   padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .cancel-button {
@@ -461,7 +461,7 @@
 }
 
 .save-button:disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   cursor: not-allowed;
 }
 
@@ -485,10 +485,10 @@
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--accent-bg);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
 }
 
 .slider-input input[type="range"]::-webkit-slider-thumb:hover {
@@ -500,7 +500,7 @@
   width: 18px;
   height: 18px;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--accent-bg);
   cursor: pointer;
 }
@@ -508,7 +508,7 @@
 .slider-value {
   min-width: 60px;
   text-align: right;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--text-color);
   font-variant-numeric: tabular-nums;
@@ -524,10 +524,10 @@
   width: 70px;
   padding: 6px 8px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-color);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   font-family: inherit;
   font-variant-numeric: tabular-nums;
@@ -547,22 +547,22 @@
 }
 
 .slider-value-input span {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
 }
 
 .use-current-button {
   padding: 10px 18px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--bg-color);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast) ease;
 }
 
 .use-current-button:hover {
@@ -598,7 +598,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp var(--transition-slow) ease-out;
 }
 
 .about-icon {
@@ -623,7 +623,7 @@
 .about-version {
   font-size: 0.9rem;
   margin: 0;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   color: var(--text-secondary);
 }
 
@@ -631,14 +631,14 @@
   font-size: 1.1rem;
   font-style: italic;
   margin: 0;
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
   color: var(--text-color);
 }
 
 .about-description {
   font-size: 1rem;
   margin: 0;
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
   line-height: 1.6;
   color: var(--text-secondary);
 }
@@ -664,7 +664,7 @@
   text-decoration: none;
   opacity: 0.7;
   color: var(--text-secondary);
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .about-link:hover {

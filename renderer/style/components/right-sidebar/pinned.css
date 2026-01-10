@@ -12,7 +12,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -21,13 +21,13 @@
   width: 20px;
   height: 20px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   line-height: 1;
   color: var(--text-secondary);
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .right-sidebar-pinned-add-button:hover {
@@ -42,8 +42,8 @@
   width: 100%;
   padding: 4px 8px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
   background: var(--bg-color);
   color: var(--text-color);
   box-sizing: border-box;
@@ -76,7 +76,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   background: var(--bg-secondary);
   cursor: pointer;
   user-select: none;
@@ -87,7 +87,7 @@
 }
 
 .right-sidebar-pinned-results-header .icon {
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
   flex-shrink: 0;
 }
 
@@ -104,19 +104,19 @@
 .right-sidebar-pinned-results-empty {
   padding: 12px 16px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .right-sidebar-pinned-item {
   padding: 8px 16px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .right-sidebar-pinned-item:hover {
@@ -128,7 +128,7 @@
   font-weight: 600;
   color: var(--text-primary);
   padding: 0 2px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .right-sidebar-pinned-highlight.highlight-green { background-color: var(--pinned-green); }

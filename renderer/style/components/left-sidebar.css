@@ -8,7 +8,7 @@
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   overflow: hidden;
-  transition: width 0.3s ease;
+  transition: width var(--transition-slow) ease;
   position: relative;
 }
 
@@ -29,14 +29,14 @@
   height: 100%;
   cursor: ew-resize;
   background-color: transparent;
-  transition: background-color 0.2s ease;
-  z-index: 10;
+  transition: background-color var(--transition-normal) ease;
+  z-index: var(--z-resize-handle);
 }
 
 .left-sidebar-resize-handle:hover,
 .left-sidebar-resize-handle.resizing {
   background-color: var(--primary-color);
-  opacity: 0.3;
+  opacity: var(--opacity-subtle);
 }
 
 .left-sidebar-resize-handle::before {
@@ -95,8 +95,8 @@
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
+  opacity: var(--opacity-muted);
+  transition: opacity var(--transition-normal) ease;
 }
 
 .left-sidebar-header:hover .left-sidebar-header-history {
@@ -109,15 +109,15 @@
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
   width: 24px;
   height: 24px;
   transition:
-    opacity 0.2s ease,
-    background-color 0.15s ease;
+    opacity var(--transition-normal) ease,
+    background-color var(--transition-fast) ease;
 }
 
 .left-sidebar-header-history-button:hover:not(:disabled) {
@@ -126,7 +126,7 @@
 
 .left-sidebar-header-history-button:disabled,
 .left-sidebar-header-history-button.disabled {
-  opacity: 0.3;
+  opacity: var(--opacity-subtle);
   cursor: default;
 }
 
@@ -135,8 +135,8 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
+  opacity: var(--opacity-muted);
+  transition: opacity var(--transition-normal) ease;
 }
 
 .left-sidebar-header:hover .left-sidebar-header-nav {
@@ -153,10 +153,10 @@
   gap: 4px;
   padding: 4px 8px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   overflow: hidden;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-normal) ease;
 }
 
 .left-sidebar-header-icon {
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-normal) ease;
 }
 
 .left-sidebar-header:hover .left-sidebar-header-actions {
@@ -189,7 +189,7 @@
 .left-sidebar-action-button {
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
@@ -199,11 +199,11 @@
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   transition:
-    opacity 0.2s,
-    color 0.2s,
-    background-color 0.15s ease;
+    opacity var(--transition-normal),
+    color var(--transition-normal),
+    background-color var(--transition-fast) ease;
 }
 
 .left-sidebar-action-button:hover {
@@ -238,14 +238,14 @@
 .left-sidebar-header-toolbar-button {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   width: 28px;
   height: 28px;
   flex-shrink: 0;
@@ -296,13 +296,13 @@
   height: 26px;
   box-sizing: border-box;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   overflow: hidden;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   transition:
-    background-color 0.15s ease,
-    opacity 0.2s ease;
+    background-color var(--transition-fast) ease,
+    opacity var(--transition-normal) ease;
 }
 
 .left-sidebar-tree-node-content:hover {
@@ -311,7 +311,7 @@
 }
 
 .left-sidebar-tree-node.active > .left-sidebar-tree-node-content {
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
 }
 
 /* Tree icons */
@@ -323,7 +323,7 @@
 .left-sidebar-tree-chevron {
   flex-shrink: 0;
   color: var(--text-secondary);
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-normal) ease;
 }
 
 /* Chevron wrapper - clickable area for expand/collapse */
@@ -365,7 +365,7 @@
 
 .left-sidebar-tree-label.disabled {
   color: var(--text-secondary);
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 /* Tree action buttons - only visible on hover */
@@ -376,20 +376,20 @@
   gap: 2px;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 2px 4px;
   margin-left: auto;
   opacity: 0;
   transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease;
+    opacity var(--transition-fast) ease,
+    background-color var(--transition-fast) ease;
   flex-shrink: 0;
 }
 
 .left-sidebar-tree-node-content:hover .left-sidebar-tree-copy-button {
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 .left-sidebar-tree-copy-button:hover {
@@ -416,7 +416,7 @@
 }
 
 .left-sidebar-tree-node-content:hover .bookmark-button {
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 .left-sidebar-tree-node-content .bookmark-button:hover {
@@ -424,12 +424,12 @@
 }
 
 .left-sidebar-tree-node-content .bookmark-button.bookmarked {
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
 }
 
 /* Sidebar header bookmark button */
 .left-sidebar-header-actions .bookmark-button {
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 .left-sidebar-header-actions .bookmark-button:hover {
@@ -437,7 +437,7 @@
 }
 
 .left-sidebar-header-actions .bookmark-button.bookmarked {
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
   color: var(--accent-bg);
 }
 

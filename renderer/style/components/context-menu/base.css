@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10001;
+  z-index: var(--z-context-menu-backdrop);
 }
 
 /* Menu container */
@@ -17,10 +17,10 @@
   position: fixed;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   min-width: 200px;
-  z-index: 10002;
+  z-index: var(--z-context-menu);
   padding: 4px;
 }
 
@@ -28,8 +28,8 @@
 .context-menu-item {
   padding: 8px 12px;
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,7 +41,7 @@
 }
 
 .context-menu-item.disabled {
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   cursor: not-allowed;
 }
 
@@ -57,17 +57,17 @@
   margin-left: 4px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   min-width: 200px;
   padding: 4px;
-  z-index: 10003;
+  z-index: var(--z-context-submenu);
 }
 
 .submenu-arrow {
   margin-left: auto;
   padding-left: 12px;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 /* ========================================
@@ -90,8 +90,8 @@
 /* Keyboard shortcut hint */
 .context-menu-shortcut {
   margin-left: 24px;
-  opacity: 0.5;
-  font-size: 12px;
+  opacity: var(--opacity-muted);
+  font-size: var(--font-size-sm);
   font-family: system-ui, -apple-system, sans-serif;
 }
 

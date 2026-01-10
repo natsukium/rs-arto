@@ -13,8 +13,8 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
 }
 
 .pinned-chip.disabled .pinned-chip-body,
@@ -38,12 +38,12 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: inherit;
 }
 
 .pinned-chip-body:hover {
-  opacity: 0.8;
+  opacity: var(--opacity-hover);
 }
 
 .pinned-chip-remove {
@@ -51,8 +51,8 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  opacity: 0.5;
-  font-size: 14px;
+  opacity: var(--opacity-muted);
+  font-size: var(--font-size-base);
   line-height: 1;
   color: inherit;
 }
@@ -75,7 +75,7 @@
 .color-palette-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: var(--z-pinned-chips);
 }
 
 .color-palette-popover {
@@ -86,8 +86,8 @@
   padding: 6px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -97,10 +97,10 @@
 .color-palette-swatch {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   border: 2px solid transparent;
   cursor: pointer;
-  transition: transform 0.15s;
+  transition: transform var(--transition-fast);
 }
 
 .color-palette-swatch:hover {
@@ -134,12 +134,12 @@
   height: 24px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   cursor: pointer;
   color: var(--text-primary);
-  opacity: 0.6;
-  transition: all 0.15s;
+  opacity: var(--opacity-secondary);
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
@@ -154,5 +154,5 @@
 
 .color-palette-remove:hover {
   background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
+  color: var(--error-color);
 }

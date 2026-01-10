@@ -26,7 +26,7 @@
 .mermaid-window-title {
   color: var(--text-color);
   flex: 1;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
 }
 
@@ -41,14 +41,14 @@
   appearance: none;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   width: 28px;
   height: 28px;
 }
@@ -60,7 +60,7 @@
 
 .viewer-control-btn .icon {
   color: var(--text-color);
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 .viewer-control-btn:hover .icon {
@@ -68,12 +68,12 @@
 }
 
 .viewer-control-btn.copied .icon {
-  color: var(--success-color, #22c55e);
+  color: var(--success-color);
   opacity: 1;
 }
 
 .viewer-control-btn.error .icon {
-  color: var(--error-color, #ef4444);
+  color: var(--error-color);
   opacity: 1;
 }
 
@@ -113,17 +113,17 @@
 
 .mermaid-window-status {
   padding: 4px 20px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
   text-align: center;
   flex-shrink: 0;
   user-select: none;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 /* Hover effect for clickable mermaid diagrams in markdown viewer */
 pre.preprocessed-mermaid svg {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-normal) ease;
 }
 
 pre.preprocessed-mermaid:hover {

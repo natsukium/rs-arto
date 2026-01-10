@@ -15,7 +15,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   flex-shrink: 0;
   cursor: pointer;
   user-select: none;
@@ -26,7 +26,7 @@
 }
 
 .right-sidebar-search-header .icon {
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
   flex-shrink: 0;
 }
 
@@ -50,13 +50,13 @@
 .right-sidebar-search-item {
   padding: 8px 16px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .right-sidebar-search-item:hover {
@@ -73,16 +73,11 @@
 }
 
 .right-sidebar-search-highlight {
-  background: rgba(255, 235, 59, 0.4);
+  background: var(--search-highlight);
   font-weight: 600;
   color: var(--text-primary);
   padding: 0 2px;
-  border-radius: 2px;
-}
-
-/* Dark theme adjustment for highlight */
-[data-theme="dark"] .right-sidebar-search-highlight {
-  background: rgba(255, 235, 59, 0.3);
+  border-radius: var(--radius-xs);
 }
 
 .right-sidebar-search-empty,
@@ -90,7 +85,7 @@
   padding: 24px 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 
 /* Search results section styling */

@@ -22,7 +22,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px 8px 8px;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 .left-sidebar-quick-access-header-icon {
@@ -52,13 +52,13 @@
   height: 26px;
   box-sizing: border-box;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   overflow: hidden;
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
   transition:
-    background-color 0.15s ease,
-    opacity 0.2s ease;
+    background-color var(--transition-fast) ease,
+    opacity var(--transition-normal) ease;
   /* Enable drag in webkit-based webviews */
   -webkit-user-drag: element;
 }
@@ -76,7 +76,7 @@
 
 /* Missing file/directory state */
 .left-sidebar-quick-access-item.missing {
-  opacity: 0.3;
+  opacity: var(--opacity-subtle);
   cursor: not-allowed;
 }
 
@@ -107,7 +107,7 @@
   opacity: 0;
   color: var(--text-secondary);
   cursor: grab;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .left-sidebar-quick-access-item:hover .left-sidebar-quick-access-item-drag-handle {
@@ -137,11 +137,11 @@
 /* Remove button - only visible on hover */
 .left-sidebar-quick-access-item .bookmark-button {
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .left-sidebar-quick-access-item:hover .bookmark-button {
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 .left-sidebar-quick-access-item .bookmark-button:hover {

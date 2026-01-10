@@ -1,5 +1,5 @@
 :root {
-  --theme-btn-focus-outline: #0969da;
+  --theme-btn-focus-outline: var(--accent-bg);
 }
 
 .theme-selector {
@@ -12,7 +12,7 @@
   appearance: none;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: var(--text-color);
   cursor: pointer;
   line-height: 1;
@@ -22,11 +22,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   transition:
-    opacity 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    opacity var(--transition-normal) ease,
+    border-color var(--transition-normal) ease,
+    background-color var(--transition-normal) ease;
 }
 
 .theme-selector-main:hover {
@@ -50,16 +50,16 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 50%;
-  z-index: 200; /* Above search bar (z-index: 100) */
+  z-index: var(--z-dropdown); /* Above search bar (z-index: 100) */
 
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 6px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 
   /* Initial state (hidden) - center aligned with vertical offset */
   opacity: 0;
@@ -68,8 +68,8 @@
 
   /* Transition */
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity var(--transition-normal) ease,
+    transform var(--transition-normal) ease;
 }
 
 /* Expanded state - center aligned with no vertical offset */
@@ -84,7 +84,7 @@
   appearance: none;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--text-color);
   cursor: pointer;
   line-height: 1;
@@ -96,9 +96,9 @@
   justify-content: center;
   opacity: 0.7;
   transition:
-    opacity 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    opacity var(--transition-normal) ease,
+    border-color var(--transition-normal) ease,
+    background-color var(--transition-normal) ease;
 }
 
 .theme-option:hover {
