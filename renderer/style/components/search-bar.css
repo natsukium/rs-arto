@@ -7,11 +7,11 @@
   top: 48px;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: var(--z-search-bar);
   /* Animation - hidden by default (slide up) */
   transform: translateY(-100%);
   pointer-events: none;
-  transition: transform 0.15s ease-out;
+  transition: transform var(--transition-fast) ease-out;
 }
 
 .search-bar--open {
@@ -28,7 +28,7 @@
 }
 
 .search-bar-main .icon {
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
   flex-shrink: 0;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .search-bar-pinned-label {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   flex-shrink: 0;
 }
@@ -57,17 +57,17 @@
   width: 100%;
   padding: 6px 28px 6px 12px; /* Right padding for clear button */
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--bg-color);
   color: var(--text-color);
-  font-size: 14px;
-  transition: border-color 0.2s;
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-normal);
   box-sizing: border-box;
 }
 
 .search-input::placeholder {
   color: var(--text-color);
-  opacity: 0.5;
+  opacity: var(--opacity-muted);
 }
 
 .search-input:focus {
@@ -87,12 +87,12 @@
   height: 20px;
   padding: 0;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: var(--text-color);
   cursor: pointer;
   opacity: 0.35;
-  transition: opacity 0.15s;
+  transition: opacity var(--transition-fast);
 }
 
 .search-clear-button:hover {
@@ -109,12 +109,12 @@
   height: 28px;
   padding: 4px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-color);
   cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.2s;
+  opacity: var(--opacity-secondary);
+  transition: all var(--transition-normal);
 }
 
 /* Push close button to the right */
@@ -131,12 +131,12 @@
 
 .search-nav-button:disabled,
 .search-pin-button:disabled {
-  opacity: 0.3;
+  opacity: var(--opacity-subtle);
   cursor: not-allowed;
 }
 
 .search-match-count {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   color: var(--text-color);
   opacity: 0.7;
   min-width: 80px;
@@ -146,21 +146,21 @@
 /* Highlight styles for matches in content */
 .search-highlight {
   background-color: color-mix(in srgb, var(--accent-bg) 30%, transparent);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding: 0 1px;
 }
 
 .search-highlight-active {
   background-color: var(--accent-bg);
   color: white;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding: 1px 2px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Pinned search highlights (5 colors, no yellow) */
 .pinned-highlight {
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   padding: 0 1px;
 }
 

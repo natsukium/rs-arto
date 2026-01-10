@@ -8,7 +8,7 @@
   margin-bottom: 1rem !important;
   padding: 0 !important;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 0.75rem;
   box-sizing: border-box;
 }
